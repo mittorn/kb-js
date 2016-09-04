@@ -1,0 +1,6 @@
+node_modules/
+matrix-bot-config.js
+matrix-bot-bitmessage-callback.sh
+*.sqlite
+.DS_Store
+.idea
