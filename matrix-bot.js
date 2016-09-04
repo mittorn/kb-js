@@ -4,9 +4,9 @@ var client = sdk.createClient("https://matrix.org");
 var config = require('./matrix-bot-config.js').base;
 
 var matrixClient = sdk.createClient({
-  baseUrl: base.botBaseUrl,
-  accessToken: base.botAccessToken,
-  userId: base.botUserId
+  baseUrl: config.botBaseUrl,
+  accessToken: config.botAccessToken,
+  userId: config.botUserId
 });
 
 
