@@ -2,6 +2,9 @@
 
 var helpModules = {};
 
+var bitmessage = require("./bitmessage.js");
+helpModules['bitmessage'] = bitmessage.getHelp;
+
 var calculate = require("./calculate.js");
 helpModules['calculate'] = calculate.getHelp;
 

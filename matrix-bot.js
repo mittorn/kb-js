@@ -28,7 +28,7 @@ botModules['wunderlist'] = require("./bot-modules/wunderlist.js");
 
 // Automatically join rooms when invited
 matrixClient.on("RoomMember.membership", function(event, member) {
-  if (member.membership === "invite" && member.userId === myUserId) {
+  if (member.membership === "invite" && member.userId === config.botUserId) {
     matrixClient.joinRoom(member.roomId).done(function() {
       console.log("Auto-joined %s", member.roomId);
     });
@@ -38,7 +38,7 @@ matrixClient.on("RoomMember.membership", function(event, member) {
 
 // Listen for messages starting with a bang (!)
 matrixClient.on("Room.timeline", function(event, room, toStartOfTimeline) {
-  if (toStartOfTimeline || event.getSender() === myUserId) {
+  if (toStartOfTimeline || event.getSender() === config.botUserId) {
     return; // don't use old results or own data
   }
   if (event.getType() !== "m.room.message") {

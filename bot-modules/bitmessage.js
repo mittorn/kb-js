@@ -6,6 +6,7 @@ var config = require('../matrix-bot-config.js').bitmessage;
 // Needs XML-RPC to communicate with the Bitmessage API
 var xmlrpc = require('xmlrpc');
 var xmlrpcClient = xmlrpc.createClient(config.apiUrl);
+var doNothing = function() { return; };
 
 // Needs sqlite database to store bitmessage IDs and their status (as not fully supported via API yet)
 var sqlite3 = require('sqlite3').verbose();
@@ -15,13 +16,18 @@ var db = new sqlite3.Database(config.sqliteDatabase);
 var base64 = require('base64-js');
 var textEncoding = require('text-encoding');
 var myEncoder = new textEncoding.TextEncoder();
+var myDecoder = new textEncoding.TextDecoder();
 
 var encodeString = function(str) {
   return base64.fromByteArray(myEncoder.encode(str));
 };
 
 var decodeString = function(str) {
-  return myEncoder.decode(base64.toByteArray(str));
+  console.log('--- DECODE : SOURCE ---');
+  console.log(str);
+  console.log('-----------------------');
+
+  return myDecoder.decode(base64.toByteArray(str.replace(/\n/g,"")));
 };
 
 
@@ -30,50 +36,44 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
   var req;
 
   console.log('Bitmessage: Received query "' + query + '"...');
-  if(query && (req = query.match(/(".*?"|[^"\s]+)(?=\s*|\s*$)/g))) {
-    if(req[0] == 'send') {
-      if(!req[1] || !req[2]) {
+  if(query && (req = query.match(/^(on|off|send) +"?(BM-[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+|)"? +(.*)$/))) {
+    if(req[1] == 'send') {
+      if(!req[2] || !req[3]) {
         matrix.sendNotice(queryRoom.roomId, 'You have to specify the bitmessage ID and the message to be sent.');
       } else {
-        var recipientId = req[1].match(/^"?(BM-[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+)"?$/)[1];
-        var message = req[2].match(/^"?(.*?)"?$/)[1];
+        var recipientId = req[2];
+        var message = req[3];
 
-        // Was a valid recipient ID provided?
-        if (!recipientId) {
-          matrix.sendNotice(queryRoom.roomId, 'This bitmessage ID is invalid.');
-        } else {
-          // Is bitmessage on for this room?
-          db.all("SELECT * FROM bm_rooms WHERE active = 1 AND room = ?", queryRoom.roomId, function (err, rows) {
-            if (rows && rows.length > 0) {
-              // Ok, send the message using the API
-              var senderId = rows[0]['bm_id'];
+        // Is bitmessage on for this room?
+        db.all("SELECT * FROM bm_rooms WHERE active = 1 AND room = ?", queryRoom.roomId, function (err, rows) {
+          if (rows && rows.length > 0) {
+            // Ok, send the message using the API
+            var senderId = rows[0]['bm_id'];
 
-              // subject -> UTF-8 -> Base64
-              var subjectBase64 = encodeString('Matrix message from ' + querySender + ' in ' + query.roomId);
+            // subject -> UTF-8 -> Base64
+            var subjectBase64 = encodeString('Matrix message from ' + querySender + ' in ' + queryRoom.name);
 
-              // message -> UTF-8 -> Base 64
-              var messageBase64 = encodeString(message);
+            // message -> UTF-8 -> Base 64
+            var messageBase64 = encodeString(message);
 
-              // Sends a method call to the XML-RPC server
-              xmlrpcClient.methodCall('sendMessage', [recipientId, senderId, subjectBase64, messageBase64], function (error, value) {
-                if(error) {
-                  matrix.sendNotice(queryRoom.roomId, 'An error occured trying to deliver your message. Please try again.');
-                  console.log('An error occured communicating with Bitmessage API.');
-                  console.log(error);
-                } else {
-                  // Results of the method response
-                  console.log('Method response for \'sendMessage\': ' + value);
-                }
-              });
+            // Sends a method call to the XML-RPC server
+            xmlrpcClient.methodCall('sendMessage', [recipientId, senderId, subjectBase64, messageBase64], function (error, value) {
+              if(error) {
+                matrix.sendNotice(queryRoom.roomId, 'An error occured trying to deliver your message. Please try again.');
+                console.log('An error occured communicating with Bitmessage API.');
+                console.log(error);
+              } else {
+                // Results of the method response
+                console.log('Method response for \'sendMessage\': ' + value);
+              }
+            });
 
-            } else {
-              matrix.sendNotice(queryRoom.roomId, 'Bitmessage is not active for this room. Run "!bitmessage on" first.');
-            }
-          });
-        }
+          } else {
+            matrix.sendNotice(queryRoom.roomId, 'Bitmessage is not active for this room. Run "!bitmessage on" first.');
+          }
+        });
       }
-    } else if(req[0] == 'on') {
-      // TODO
+    } else if(req[1] == 'on') {
 
       // Do we already have an address in the database?
       db.all("SELECT * FROM bm_rooms WHERE room = ?", queryRoom.roomId, function (err, rows) {
@@ -117,7 +117,7 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
         }
       });
 
-    } else if(req[0] == 'off') {
+    } else if(req[1] == 'off') {
       // Mark as disabled in database (we do not want to delete it from PyBitmessage and at the moment there is
       // no way to disable it using the API)
       db.run("UPDATE bm_rooms SET active=0 WHERE active = 1 AND room = ?", queryRoom.roomId, function (err) {
@@ -145,15 +145,17 @@ exports.webRequest = function(matrix, path, query, res) {
   if(path === 'newMessage' && query['secret_key'] && query['secret_key'] === config.webSecretKey) {
     // Ok, we retrieve all messages from the INBOX...
     xmlrpcClient.methodCall('getAllInboxMessages', [ ], function (error, value) {
-      if(error || !value || !Object.isArray(value['inboxMessages'])) {
+      var parsedJSON = (value ? JSON.parse(value) : undefined);
+      if(error || !parsedJSON || !Array.isArray(parsedJSON['inboxMessages'])) {
         // Fail silently
         console.log('An error occured communicating with Bitmessage API, trying to retrieve new messages.');
         console.log(error);
+        console.log(value);
       } else {
         // Ok, iterate over all messages...
-        value['inboxMessages'].forEach(function(message) {
+        parsedJSON['inboxMessages'].forEach(function(message) {
           // To which room is this message targeted?
-          db.get('SELECT room FROM auth_requests WHERE bm_id = ? AND active = 1', message['toAddress'], function(err, row) {
+          db.get('SELECT room FROM bm_rooms WHERE bm_id = ? AND active = 1', message['toAddress'], function(err, row) {
             if(err) {
               // If it fails, we fail silently and will retry when the next message has been received.
               console.log('Error retrieving room for bitmessage ID from database: ' + err);
@@ -163,19 +165,19 @@ exports.webRequest = function(matrix, path, query, res) {
                 // Room is active. Post message to room and trash it if successful.
                 var sendMessage;
                 if(message['encodingType'] === 2) {
-                  sendMessage = '[Bitmessage] ' + decodeString(message['subject']) + ' (from ' + message['fromAddress'] + ')\n' + decodeString(message['body']);
+                  sendMessage = '[Bitmessage] ' + decodeString(message['subject']) + ' (from ' + message['fromAddress'] + ')\n' + decodeString(message['message']);
                 } else {
                   sendMessage = '[Bitmessage] Message with unsupported encoding type received from ' + message['fromAddress'] + '.';
                 }
 
                 matrix.sendNotice(row['room'], sendMessage).then(function() {
                   // Ok, notice sending was successful, so we can trash the message.
-                  xmlrpcClient.methodCall('trashMessage', [ message['msgid'] ]);
+                  xmlrpcClient.methodCall('trashMessage', [ message['msgid'] ], doNothing);
                 });
 
               } else {
                 // Ok, so this room is not active. We just trash the message so that it does not clutter the inbox.
-                xmlrpcClient.methodCall('trashMessage', [ message['msgid'] ]);
+                xmlrpcClient.methodCall('trashMessage', [ message['msgid'] ], doNothing);
               }
             }
           });
