@@ -29,9 +29,17 @@ botModules['wunderlist'] = require("./bot-modules/wunderlist.js");
 // Automatically join rooms when invited
 matrixClient.on("RoomMember.membership", function(event, member) {
   if (member.membership === "invite" && member.userId === config.botUserId) {
-    matrixClient.joinRoom(member.roomId).done(function() {
-      console.log("Auto-joined %s", member.roomId);
-    });
+  	console.log("Received invite for %s from %s. Auto-joining...", member.roomId, event.getSender());
+  	
+    matrixClient.joinRoom(member.roomId)
+       .then(function() {
+         console.log("Auto-joined %s", member.roomId);
+       })
+       .catch(function(err) {
+       	 console.log("Could not join room %s because of an error:", member.roomId);
+       	 console.log(err);
+       })
+       .done();
   }
 });
 

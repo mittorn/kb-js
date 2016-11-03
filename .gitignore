@@ -4,4 +4,4 @@ matrix-bot-bitmessage-callback.sh
 *.sqlite
 .DS_Store
 .idea
-npm-debug.log
+*.log
