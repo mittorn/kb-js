@@ -8,7 +8,7 @@ html
     p Please complete the following form to attach your Kanban Tool API key to your matrix user <b>#{matrix_user}</b>.
 
     form(action='do_login', method='POST')
-      input(type="hidden", name="auth_request", value="#{auth_request}")
+      input(type="hidden", name="auth_request", value=auth_request)
       p
         label(for="domain") Your Kanban Tool subdomain:
         input(type="text", placeholder="domain", name="domain")

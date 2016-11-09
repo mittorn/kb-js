@@ -98,7 +98,7 @@ app.use(bodyParser.json());
 
 // Jade views
 app.set('views', './bot-views');
-app.set('view engine', 'jade');
+app.set('view engine', 'pug');
 
 
 // Hello World
