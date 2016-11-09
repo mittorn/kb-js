@@ -7,6 +7,10 @@
   "scripts": {
     "start": "node matrix-bot.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/argit/hello-matrix-bot.git"
+  },
   "dependencies": {
     "base64-js": "^1.2.0",
     "body-parser": "^1.15.2",
