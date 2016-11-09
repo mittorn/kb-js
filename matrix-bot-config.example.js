@@ -10,8 +10,9 @@ exports.base = {
 
 // For bitmessage module
 exports.bitmessage = {
-
-
+  'apiUrl':          'http://<apiusername>:<apipassword>@<apiinterface>:<apiport>/',
+  'webSecretKey':    '<insert secret key here (same as in shell script)>',
+  'sqliteDatabase':  'bitmessage.sqlite'
 };
 
 
