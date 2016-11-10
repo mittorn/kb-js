@@ -36,13 +36,14 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
   var req;
 
   console.log('Bitmessage: Received query "' + query + '"...');
-  if(query && (req = query.match(/^(on|off|send) +"?(BM-[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+|)"? +(.*)$/))) {
+  if(query && (req = query.match(/^(on|off|send)( +"?(BM-[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+|)"? +(.*)|)$/))) {
     if(req[1] == 'send') {
-      if(!req[2] || !req[3]) {
+      console.log('Bitmessage: Processing send request...');
+      if(!req[3] || !req[4]) {
         matrix.sendNotice(queryRoom.roomId, 'You have to specify the bitmessage ID and the message to be sent.');
       } else {
-        var recipientId = req[2];
-        var message = req[3];
+        var recipientId = req[3];
+        var message = req[4];
 
         // Is bitmessage on for this room?
         db.all("SELECT * FROM bm_rooms WHERE active = 1 AND room = ?", queryRoom.roomId, function (err, rows) {
@@ -74,6 +75,7 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
         });
       }
     } else if(req[1] == 'on') {
+      console.log('Bitmessage: Processing on request...');
 
       // Do we already have an address in the database?
       db.all("SELECT * FROM bm_rooms WHERE room = ?", queryRoom.roomId, function (err, rows) {
@@ -118,6 +120,8 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
       });
 
     } else if(req[1] == 'off') {
+      console.log('Bitmessage: Processing off request...');
+
       // Mark as disabled in database (we do not want to delete it from PyBitmessage and at the moment there is
       // no way to disable it using the API)
       db.run("UPDATE bm_rooms SET active=0 WHERE active = 1 AND room = ?", queryRoom.roomId, function (err) {

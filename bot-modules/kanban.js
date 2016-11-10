@@ -306,6 +306,6 @@ exports.runSetup = function(matrix) {
 exports.getHelp = function(details) {
   return 'You can use !kanban login (ideally in a private room) to authorize me to access your Kanban board (from kanbantool.com). Afterwards you can use the following features:\n' +
          '!kanban add <Board> <Task Description> - Will add the task to the left-most, up-most part of the given <Board>.\n' +
-         '!kanban follow <Board> - Will monitor the given board for changes (has a 1 minute delay as we do not monitor the boards more often).\n' +
-         '!kanban unfollow <Board> - Will stop monitoring the given board for changes.';
+         '!kanban follow <Board> - Will monitor the given board for changes (has a 1 minute delay as we do not monitor the boards more often). [NOT YET IMPLEMENTED]\n' +
+         '!kanban unfollow <Board> - Will stop monitoring the given board for changes. [NOT YET IMPLEMENTED]';
 };
