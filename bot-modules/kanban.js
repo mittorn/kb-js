@@ -107,7 +107,7 @@ var doMonitorBoards = function(matrixClient) {
       })
       .then(function(res) {
         // API key no longer valid?
-        if(res[0].statusCode >= 400) {
+        if(res[0] && res[0].statusCode >= 400) {
           console.log('API key for domain ' + d.domain + ', key ' + d.apiKey + ', board id ' + d.boardId + ' no longer valid or board does not exist anymore. Removing from following...');
 
           var myBoardId = d.boardId;
