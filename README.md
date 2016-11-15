@@ -107,6 +107,15 @@ At the moment, the following is unsupported by this bot:
 - The bot cannot be restricted to only respond to joins by approved users. This means that when you set-up your own bot, everyone can invite him into new rooms and use the provided functionality.
 
 
+## Roadmap
+There are a lot of cool integrations that would be interesting to add, but for the moment the following items are high on the agenda and will be implemented "as time permits" in this order:
+
+1. Generic webhook functionality (allows other tools to post to a room via webhook)
+2. Support for providing statistics on room discussion, similar to what [pigs](http://pisg.sourceforge.net/) does for IRC chats
+3. Support for end-to-end encrypted rooms
+4. Simple reminder / alarm clock functionality
+
+
 ## Questions?
 If you have any questions, feel free to join [\#hello-matrix-bot:matrix.org](https://matrix.to/#/#hello-matrix-bot:matrix.org) for answers. If any questions come up frequently, we will add them here.
 
