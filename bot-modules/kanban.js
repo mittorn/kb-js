@@ -483,7 +483,7 @@ exports.runSetup = function(matrixClient) {
         return qRequest({ url: 'https://' + encodeURIComponent(boardData.domain) + '.kanbantool.com/api/v1/boards/' + encodeURIComponent(boardData.boardId) + '.json?api_token=' + encodeURIComponent(boardData.apiKey), json: true, method: 'GET' });
       }).then(function(res) {
         if(!res[1] || !res[1].board || !res[1].board.name) {
-          return q.reject('API response for board details not understood: ' + res);
+          return q.reject('API response for board details not understood: ' + JSON.stringify(res));
         }
 
         boardData.boardName = res[1].board.name;
