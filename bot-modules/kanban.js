@@ -1,13 +1,18 @@
 // Configuration
 var config = require('../matrix-bot-config.js').kanban;
 
-
 // Let's go...
 var request = require('request');
 var sqlite3 = require('sqlite3').verbose();
 var q = require('q');
+var qRequest = q.denodeify(request);
 
 var db = new sqlite3.Database(config.sqliteDatabase);
+var dbRun = q.denodeify(db.run.bind(db));
+var dbEach = q.denodeify(db.each.bind(db));
+
+// Array containing all boards to be monitored.
+var monitorBoards = [];
 
 // From: http://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
 var getGUID = function() {
@@ -83,6 +88,78 @@ var findKanbanBoard = function(matrix_user, search) {
   return deferred.promise;
 };
 
+var doMonitorBoards = function(matrixClient) {
+  // Iterate over all monitorBoards entries and obtain changelog...
+  var monitorPromise = q();
+
+  console.log('[Kanban] Board monitoring job runs...');
+
+  monitorBoards.forEach(function(d) {
+    // Disabled entry?
+    if(d.boardId === undefined) { return; }
+
+    // Ok, add promise.
+    monitorPromise = monitorPromise
+      .then(function() {
+        // Obtain changelog...
+        console.log('[Kanban] Obtaining changelog for board ' + d.boardId + ' from ' + d.lastCheck.toISOString() + '...');
+        return qRequest({ url: 'https://' + encodeURIComponent(d.domain) + '.kanbantool.com/api/v1/boards/' + encodeURIComponent(d.boardId) + '/changelog.json?from=' + encodeURIComponent(d.lastCheck.toISOString()) + '&api_token=' + encodeURIComponent(d.apiKey), json: true, method: 'GET' });
+      })
+      .then(function(res) {
+        // API key no longer valid?
+        if(res[0].statusCode >= 400) {
+          console.log('API key for domain ' + d.domain + ', key ' + d.apiKey + ', board id ' + d.boardId + ' no longer valid or board does not exist anymore. Removing from following...');
+
+          var myBoardId = d.boardId;
+
+          // Disables run in boards array.
+          d.boardId = undefined;
+
+          // Inform room.
+          matrixClient.sendNotice(d.roomId, '[Kanban] We stopped monitoring the board "' + d.boardName + '" because Kanban Tool reported that either the given board does not exist anymore or the stored API key is no longer valid. Please re-authenticate and follow the board again.');
+
+          // Remove from database.
+          return dbRun('DELETE FROM followed_boards WHERE room_id=? AND matrix_user=? AND board_id=?', d.roomId, d.matrixUser, myBoardId);
+        }
+
+        // Correctly formatted?
+        if(!Array.isArray(res[1])) {
+          console.log('We received changelog data that is not in the expected format: ');
+          console.log(res);
+
+          console.log('Continue with next request.');
+          return;
+        }
+
+        // ... new items?
+        var newLastCheckTime = d.lastCheck.getTime();
+        res[1].forEach(function(item) {
+          // Announce...
+          matrixClient.sendNotice(d.roomId, '[Kanban ' + d.boardName + '] ' + item.changelog.description);
+
+          // Date...
+          var myDateTime = Date.parse(item.changelog.created_at);
+          if(myDateTime > newLastCheckTime) { newLastCheckTime = myDateTime; }
+        });
+
+        // ... and update monitorBoards and database with new date ...
+        d.lastCheck = new Date(newLastCheckTime);
+        return dbRun('UPDATE followed_boards SET last_check=? WHERE room_id=? AND matrix_user=? AND board_id=?', d.lastCheck, d.roomId, d.matrixUser, d.boardId);
+
+        // Success.
+      });
+
+
+  });
+
+  // All done? Call us again in five minutes.
+  monitorPromise
+    .then(function() {
+      setTimeout(doMonitorBoards, 300000, matrixClient);
+    })
+    .done();
+};
+
 
 
 exports.runQuery = function(matrix, query, querySender, queryRoom) {
@@ -90,16 +167,16 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
 
   console.log('Kanban: Received query "' + query + '"...');
   if(query && (req = query.match(/(".*?"|[^"\s]+)(?=\s*|\s*$)/g))) {
-    if(req[0] == 'login') {
+    if (req[0] == 'login') {
       // Login if not already logged in
       // Login means that the user is asked to submit his/her API token
 
       getUserKey(querySender, true)
         .then(
-          function(api_key, domain) {
+          function (api_key, domain) {
             var deferred = q.defer();
 
-            if(api_key) {
+            if (api_key) {
               // Already logged in...
               deferred.reject('You are already logged in. Please logout first before trying to login again.');
             } else {
@@ -108,8 +185,8 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
               // Add new auth request and return URL for logging into Kanban...
               var auth_request = getGUID();
 
-              db.run("INSERT INTO auth_requests (id, matrix_user, room_id, requested_at) VALUES (?, ?, ?, ?)", auth_request, querySender, queryRoom.roomId, new Date(), function(err) {
-                if(err) {
+              db.run("INSERT INTO auth_requests (id, matrix_user, room_id, requested_at) VALUES (?, ?, ?, ?)", auth_request, querySender, queryRoom.roomId, new Date(), function (err) {
+                if (err) {
                   console.log('An error occured with SQLite3: ' + err);
                   deferred.reject('An error occured obtaining the authentication request.');
                 } else {
@@ -123,18 +200,18 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
           }
         )
         .then(
-          function(res) {
+          function (res) {
             matrix.sendNotice(queryRoom.roomId, res);
           },
-          function(err) {
+          function (err) {
             matrix.sendNotice(queryRoom.roomId, err);
           }
         );
 
-    } else if(req[0] == 'logout') {
+    } else if (req[0] == 'logout') {
       // Logout = deleting the stored authentication token
-      db.run('DELETE FROM api_keys WHERE matrix_user=?', querySender, function(err) {
-        if(err) {
+      db.run('DELETE FROM api_keys WHERE matrix_user=?', querySender, function (err) {
+        if (err) {
           console.log('Database error when removing API key: ' + err);
           matrix.sendNotice(queryRoom.roomId, 'An error occured while trying to remove your Kanban TOol API key from our database. Please try again later.');
         } else {
@@ -142,21 +219,21 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
         }
       });
 
-    } else if(req[0] == 'add') {
+    } else if (req[0] == 'add') {
       // Add new card to Kanban board
-      if(!req[1] || !req[2]) {
+      if (!req[1] || !req[2]) {
         matrix.sendNotice(queryRoom.roomId, 'You have to specify board list to be added to and the text of the item.'); // TODO: support default boards
       } else {
         var boardSearch = req[1].match(/^"?(.*?)"?$/)[1];
         var itemToAdd = req[2].match(/^"?(.*?)"?$/)[1];
 
         // If there is text that is not escaped with quotes, add it to the task title anyways
-        for(var i = 3;i < req.length;i++) {
+        for (var i = 3; i < req.length; i++) {
           itemToAdd += ' ' + req[i];
         }
 
         findKanbanBoard(querySender, boardSearch).then(
-          function(boardData) {
+          function (boardData) {
             var deferred = q.defer();
 
             request({
@@ -168,8 +245,8 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
                   name: itemToAdd
                 }
               }
-            }, function(err, res) {
-              if(err) {
+            }, function (err, res) {
+              if (err) {
                 console.log('Kanban Tool API error:');
                 console.log(err);
                 deferred.reject('An error occured trying to add the task to your board.');
@@ -181,28 +258,112 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
             return deferred.promise;
           }
         ).then(
-          function(res) {
+          function (res) {
             console.log('Kanban task successfully added:');
             console.log(res);
             matrix.sendNotice(queryRoom.roomId, res);
           },
-          function(err) {
+          function (err) {
             console.log('Kanban error: ' + err);
             matrix.sendNotice(queryRoom.roomId, err);
           }
         );
       }
 
-    } else if(req[0] == 'follow') {
+    } else if (req[0] == 'follow') {
       // Start monitoring Kanban board for changes
+      if (!req[1]) {
+        matrix.sendNotice(queryRoom.roomId, 'You have to specify the board which should be monitored for changes.');
+      } else {
+        boardSearch = req[1];
+        var boardData = undefined;
 
-      // TODO
+        // Identify board
+        findKanbanBoard(querySender, boardSearch).then(
+          function (_boardData) {
+            boardData = _boardData;
 
-    } else if(req[0] == 'unfollow') {
+            // Are we already monitoring this board...?
+            if (monitorBoards.find(function (d) {
+                return boardData.boardId === d.boardId
+              }) >= 0) {
+              return;
+            }
+
+            // If no, add to database...
+            var currDate = new Date();
+            return dbRun("INSERT INTO followed_boards (matrix_user, room_id, board_id, last_check, stored_at) VALUES (?, ?, ?, ?, ?)", querySender, queryRoom.roomId, boardData.boardId, currDate, currDate).then(function () {
+              // ... and to monitoring array.
+              monitorBoards.push({
+                matrixUser: querySender,
+                roomId: queryRoom.roomId,
+                boardId: boardData.boardId,
+                boardName: boardData.boardName,
+                domain: boardData.domain,
+                apiKey: boardData.apiKey,
+                lastCheck: currDate  // We want changelog entries starting from now
+              });
+            });
+
+          }
+        ).then(
+          function () {
+            console.log('Now monitoring Kanban board "' + boardData.boardName + '".');
+            matrix.sendNotice(queryRoom.roomId, 'We are now monitoring the Kanban board ' + boardData.boardName + ' for changes and will notify this room.');
+          },
+          function (err) {
+            console.log('Kanban error: ' + err);
+            matrix.sendNotice(queryRoom.roomId, '[Kanban] An error occured: ' + err.toString());
+          }
+        );
+      }
+
+    } else if (req[0] == 'unfollow') {
       // Stop monitoring Kanban board for changes
+      if (!req[1]) {
+        matrix.sendNotice(queryRoom.roomId, 'You have to specify the board which should be unfollowed.');
+      } else {
+        boardSearch = req[1];
 
-      // TODO
+        // Are we following this board?
+        boardData = monitorBoards.find(function (d) {
+          return (d.roomId === queryRoom.roomId && d.boardName.indexOf(boardSearch) >= 0);
+        });
 
+        if (boardData === undefined) {
+          // We did not find this board, return.
+          console.log('Kanban board "' + boardSearch + '" is not followed in this room.');
+
+          var followedBoards = '';
+          monitorBoards.forEach(function (d) {
+            if (d.roomId === queryRoom.roomId) {
+              followedBoards += '- ' + d.boardName + '\n';
+            }
+          });
+
+          if (followedBoards === '') {
+            followedBoards = 'We are currently not following any boards in this room.';
+          }
+          else {
+            followedBoards = 'We are currently following these boards:\n' + followedBoards;
+          }
+          matrix.sendNotice(queryRoom.roomId, 'No such Kanban board is currently followed in this room. ' + followedBoards);
+          return;
+        }
+
+        // Ok, we have a boardId and can unfollow it.
+        // Remove from database...
+        return dbRun("DELETE FROM followed_boards WHERE room_id = ? AND board_id = ?", queryRoom.roomId, boardData.boardId).then(function () {
+          // ... and from monitoring array.
+          var boardIdx = monitorBoards.findIndex(function (d) {
+            return (d.roomId === queryRoom.roomId && d.boardId === boardData.boardId);
+          });
+          monitorBoards.splice(boardIdx, 1);
+
+          // Ok, we are done.
+          matrix.sendNotice(queryRoom.roomId, 'Ok. We are no longer following changes on the Kanban board ' + boardData.boardName + '.');
+        });
+      }
     }
   }
 };
@@ -299,13 +460,53 @@ exports.webRequest = function(matrix, path, query, res) {
   }
 };
 
-exports.runSetup = function(matrix) {
+exports.runSetup = function(matrixClient) {
   // TODO - start monitoring for defined "follow"s
+
+  // Retrieve all boards to be monitored from database...
+  var monitorBoardsNew = [];
+  dbEach('SELECT t1.*, t2.domain, t2.api_key FROM followed_boards t1, api_keys t2 WHERE t2.matrix_user=t1.matrix_user', function(err, row) {
+    monitorBoardsNew.push({
+      matrixUser: row.matrix_user,
+      roomId: row.room_id,
+      boardId: row.board_id,
+      boardName: undefined, // will be obtained in next step
+      domain: row.domain,
+      apiKey: row.api_key,
+      lastCheck: new Date(row.last_check)
+    });
+  }).then(function() {
+    // We iterate over all entries and obtain board names via the API...
+    var nextStepPromise = q();
+    monitorBoardsNew.forEach(function(boardData) {
+      nextStepPromise = nextStepPromise.then(function() {
+        return qRequest({ url: 'https://' + encodeURIComponent(boardData.domain) + '.kanbantool.com/api/v1/boards/' + encodeURIComponent(boardData.boardId) + '.json?api_token=' + encodeURIComponent(boardData.apiKey), json: true, method: 'GET' });
+      }).then(function(res) {
+        if(!res[1] || !res[1].board || !res[1].board.name) {
+          return q.reject('API response for board details not understood: ' + res);
+        }
+
+        boardData.boardName = res[1].board.name;
+      });
+    });
+    return nextStepPromise;
+
+  }).then(function() {
+    // We copy the monitorBoards array and call doMonitorBoards function which will then call itself every five minutes...
+    monitorBoards = monitorBoardsNew;
+    doMonitorBoards(matrixClient);
+  }).done();
+
+
+  // TODO - we should clean out entries for rooms which we are no longer participating in - but this is true for wunderlist etc. as well
+
+
 };
+
 
 exports.getHelp = function(details) {
   return 'You can use !kanban login (ideally in a private room) to authorize me to access your Kanban board (from kanbantool.com). Afterwards you can use the following features:\n' +
          '!kanban add <Board> <Task Description> - Will add the task to the left-most, up-most part of the given <Board>.\n' +
-         '!kanban follow <Board> - Will monitor the given board for changes (has a 1 minute delay as we do not monitor the boards more often). [NOT YET IMPLEMENTED]\n' +
-         '!kanban unfollow <Board> - Will stop monitoring the given board for changes. [NOT YET IMPLEMENTED]';
+         '!kanban follow <Board> - Will monitor the given board for changes (has a 1 minute delay as we do not monitor the boards more often).\n' +
+         '!kanban unfollow <Board> - Will stop monitoring the given board for changes.';
 };
