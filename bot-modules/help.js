@@ -27,7 +27,7 @@ var wunderlist = require("./wunderlist.js");
 helpModules['wunderlist'] = wunderlist.getHelp;
 
 
-exports.runQuery = function(matrix, query, querySender, queryRoom) {
+exports.runQuery = function(client, query, querySender, queryRoom) {
   var params, line;
 
   console.log('Helped called for ' + query);
@@ -49,5 +49,5 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
   }
 
   console.log(line);
-  matrix.sendNotice(queryRoom.roomId, line);
+  client.matrixClient.sendNotice(queryRoom.roomId, line);
 };

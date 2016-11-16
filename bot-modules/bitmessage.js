@@ -32,7 +32,7 @@ var decodeString = function(str) {
 
 
 
-exports.runQuery = function(matrix, query, querySender, queryRoom) {
+exports.runQuery = function(client, query, querySender, queryRoom) {
   var req;
 
   console.log('Bitmessage: Received query "' + query + '"...');
@@ -40,7 +40,7 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
     if(req[1] == 'send') {
       console.log('Bitmessage: Processing send request...');
       if(!req[3] || !req[4]) {
-        matrix.sendNotice(queryRoom.roomId, 'You have to specify the bitmessage ID and the message to be sent.');
+        client.matrixClient.sendNotice(queryRoom.roomId, 'You have to specify the bitmessage ID and the message to be sent.');
       } else {
         var recipientId = req[3];
         var message = req[4];
@@ -60,7 +60,7 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
             // Sends a method call to the XML-RPC server
             xmlrpcClient.methodCall('sendMessage', [recipientId, senderId, subjectBase64, messageBase64], function (error, value) {
               if(error) {
-                matrix.sendNotice(queryRoom.roomId, 'An error occured trying to deliver your message. Please try again.');
+                client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured trying to deliver your message. Please try again.');
                 console.log('An error occured communicating with Bitmessage API.');
                 console.log(error);
               } else {
@@ -70,7 +70,7 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
             });
 
           } else {
-            matrix.sendNotice(queryRoom.roomId, 'Bitmessage is not active for this room. Run "!bitmessage on" first.');
+            client.matrixClient.sendNotice(queryRoom.roomId, 'Bitmessage is not active for this room. Run "!bitmessage on" first.');
           }
         });
       }
@@ -84,15 +84,15 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
             // Reactivate
             db.run("UPDATE bm_rooms SET active=1 WHERE room = ?", queryRoom.roomId, function (err) {
               if (err || this.changes === 0) {
-                matrix.sendNotice(queryRoom.roomId, 'I could not reactivate bitmessage for this room because an error occured.');
+                client.matrixClient.sendNotice(queryRoom.roomId, 'I could not reactivate bitmessage for this room because an error occured.');
                 console.log(err);
               } else {
-                matrix.sendNotice(queryRoom.roomId, 'This room is now listening to bitmessages at ' + rows[0].bm_id + '.');
+                client.matrixClient.sendNotice(queryRoom.roomId, 'This room is now listening to bitmessages at ' + rows[0].bm_id + '.');
               }
             });
           } else {
             // Do nothing
-            matrix.sendNotice(queryRoom.roomId, 'This room is already listening to bitmessages at ' + rows[0].bm_id + '.');
+            client.matrixClient.sendNotice(queryRoom.roomId, 'This room is already listening to bitmessages at ' + rows[0].bm_id + '.');
           }
         } else {
           // We need to create a new addresse via the API...
@@ -103,14 +103,14 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
               // ... and add to the database ...
               db.run("INSERT INTO bm_rooms (room, bm_id, active) VALUES (?, ?, 1)", queryRoom.roomId, value, function (err) {
                 if (err) {
-                  matrix.sendNotice(queryRoom.roomId, 'I could not store the bitmessage ID for this room because an error occured. Please try again later.');
+                  client.matrixClient.sendNotice(queryRoom.roomId, 'I could not store the bitmessage ID for this room because an error occured. Please try again later.');
                   console.log(err);
                 } else {
-                  matrix.sendNotice(queryRoom.roomId, 'This room is now listening to bitmessages at ' + value + '.');
+                  client.matrixClient.sendNotice(queryRoom.roomId, 'This room is now listening to bitmessages at ' + value + '.');
                 }
               });
             } else {
-              matrix.sendNotice(queryRoom.roomId, 'An error occured trying to create a new bitmessage ID for this room. Please try again.');
+              client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured trying to create a new bitmessage ID for this room. Please try again.');
               console.log('An error occured communicating with Bitmessage API.');
               console.log(error);
               console.log(value);
@@ -126,12 +126,12 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
       // no way to disable it using the API)
       db.run("UPDATE bm_rooms SET active=0 WHERE active = 1 AND room = ?", queryRoom.roomId, function (err) {
         if (err) {
-          matrix.sendNotice(queryRoom.roomId, 'I could not deactive bitmessage for this room because an error occured.');
+          client.matrixClient.sendNotice(queryRoom.roomId, 'I could not deactive bitmessage for this room because an error occured.');
           console.log(err);
         } else if (this.changes === 0) {
-          matrix.sendNotice(queryRoom.roomId, 'Nice try, but bitmessage isn\'t active for this room so I cannot switch it off!');
+          client.matrixClient.sendNotice(queryRoom.roomId, 'Nice try, but bitmessage isn\'t active for this room so I cannot switch it off!');
         } else {
-          matrix.sendNotice(queryRoom.roomId, 'Ok, I will keep the bitmessage ID for now but won\'t show anymore messages.');
+          client.matrixClient.sendNotice(queryRoom.roomId, 'Ok, I will keep the bitmessage ID for now but won\'t show anymore messages.');
         }
       });
     }
@@ -143,7 +143,7 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
 
 
 // We use our web API to receive new message notifications (using the included shell script and curl)
-exports.webRequest = function(matrix, path, query, res) {
+exports.webRequest = function(client, path, query, res) {
   console.log('Bitmessage - Received web request for ' + path);
 
   if(path === 'newMessage' && query['secret_key'] && query['secret_key'] === config.webSecretKey) {
@@ -174,7 +174,7 @@ exports.webRequest = function(matrix, path, query, res) {
                   sendMessage = '[Bitmessage] Message with unsupported encoding type received from ' + message['fromAddress'] + '.';
                 }
 
-                matrix.sendNotice(row['room'], sendMessage).then(function() {
+                client.matrixClient.sendNotice(row['room'], sendMessage).then(function() {
                   // Ok, notice sending was successful, so we can trash the message.
                   xmlrpcClient.methodCall('trashMessage', [ message['msgid'] ], doNothing);
                 });

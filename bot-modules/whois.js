@@ -3,14 +3,14 @@
 var exec = require('child_process').exec;
 
 
-exports.runQuery = function(matrix, query, querySender, queryRoom) {
+exports.runQuery = function(client, query, querySender, queryRoom) {
   var hostMatch, traceroute;
 
   console.log('Whois: Received query "' + query + '"...\n');
   if(query && (hostMatch = query.match(/[a-zA-Z0-9][a-zA-Z0-9\.\-]+/))) {
     // executes
     console.log('Whois: Running for ' + hostMatch[0] + '...');
-    traceroute = exec("/usr/bin/whois " + hostMatch[0], function (error, stdout, stderr) {
+    exec("/usr/bin/whois " + hostMatch[0], function (error, stdout, stderr) {
       var line = '';
       if (error !== null) {
         line = 'Whois error: ' + stderr;
@@ -19,7 +19,7 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
       }
 
       console.log(line);
-      matrix.sendNotice(queryRoom.roomId, line);
+      client.matrixClient.sendNotice(queryRoom.roomId, line);
     });
   }
 };
