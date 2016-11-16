@@ -38,6 +38,15 @@ matrixClient.on("RoomMember.membership", function(event, member) {
        .catch(function(err) {
        	 console.log("Could not join room %s because of an error:", member.roomId);
        	 console.log(err);
+
+         // We leave (=reject invite) rooms that cannot be joined because they have no users left.
+         if(err.message === 'No known servers') {
+           console.log('We are reject invite for room (' + member.roomId + ') we will not be able to join...');
+           return matrixClient.leave(member.roomId);
+         }
+       }).catch(function(err) {
+         // Unexpected error
+         console.log('An error occured while trying to reject / process room invites:' + JSON.stringify(err));
        })
        .done();
   }
