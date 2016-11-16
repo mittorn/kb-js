@@ -1,8 +1,8 @@
-var sdk = require("matrix-js-sdk");
-var client = sdk.createClient("https://matrix.org");
-
+// Loading our configuration file
 var config = require('./matrix-bot-config.js').base;
 
+// matrix-js-sdk
+var sdk = require("matrix-js-sdk");
 var matrixClient = sdk.createClient({
   baseUrl: config.botBaseUrl,
   accessToken: config.botAccessToken,
@@ -75,8 +75,11 @@ matrixClient.on("Room.timeline", function(event, room, toStartOfTimeline) {
   }
 });
 
-// 0 = We do not want old messages
-matrixClient.startClient({ initialSyncLimit: 1 });
+// We do not want old messages - should be able to use initialSyncLimit = 0 as soon as matrix-js-sdk has been updated
+clientFilter = new sdk.Filter(matrixClient.credentials.userId);
+clientFilter.setTimelineLimit(0);
+matrixClient.startClient({ filter: clientFilter });
+
 
 // Initialise modules where required
 Object.keys(botModules).forEach(function(module) {
