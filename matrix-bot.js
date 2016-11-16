@@ -46,8 +46,8 @@ matrixClient.on("RoomMember.membership", function(event, member) {
 
 // Listen for messages starting with a bang (!)
 matrixClient.on("Room.timeline", function(event, room, toStartOfTimeline) {
-  if (toStartOfTimeline || event.getSender() === config.botUserId) {
-    return; // don't use old results or own data
+  if (toStartOfTimeline || event.getUnsigned().age > (3*60*1000) || event.getSender() === config.botUserId) {
+    return; // don't use results older than three minutes or own data
   }
   if (event.getType() !== "m.room.message") {
     return; // only use messages
@@ -58,6 +58,9 @@ matrixClient.on("Room.timeline", function(event, room, toStartOfTimeline) {
     // the room name will update with m.room.name events automatically
     "(%s) %s :: %s", room.name, event.getSender(), event.getContent().body
   );
+
+  console.log('Event data:' + JSON.stringify(event.getUnsigned()));
+
 
   // Is it a bang?
   var botCommand;
@@ -75,10 +78,9 @@ matrixClient.on("Room.timeline", function(event, room, toStartOfTimeline) {
   }
 });
 
-// We do not want old messages - should be able to use initialSyncLimit = 0 as soon as matrix-js-sdk has been updated
-clientFilter = new sdk.Filter(matrixClient.credentials.userId);
-clientFilter.setTimelineLimit(0);
-matrixClient.startClient({ filter: clientFilter });
+// We use the default initialSyncLimit of 8 as it is also used for subsequent requests
+// However, we ignore messages older than 3 minutes (see above) to avoid replying to stale requests
+matrixClient.startClient({ });
 
 
 // Initialise modules where required
