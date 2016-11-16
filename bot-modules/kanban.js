@@ -283,10 +283,11 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
           function (_boardData) {
             boardData = _boardData;
 
-            // Are we already monitoring this board...?
-            if (monitorBoards.find(function (d) {
-                return boardData.boardId === d.boardId
+            // Are we already monitoring this board in this room...?
+            if (monitorBoards.findIndex(function (d) {
+                return (queryRoom.roomId == d.roomId && boardData.boardId == d.boardId);
               }) >= 0) {
+              console.log('We are already monitoring this board.');
               return;
             }
 
