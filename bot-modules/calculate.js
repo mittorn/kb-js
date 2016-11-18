@@ -8,7 +8,7 @@ var config = require('../matrix-bot-config.js').calculate;
 // http://api.wolframalpha.com/v2/query?appid=xxx&input=35%20USD%20to%20CHF&format=plaintext
 
 
-exports.runQuery = function(matrix, query, querySender, queryRoom) {
+exports.runQuery = function(client, query, querySender, queryRoom) {
   request('http://api.wolframalpha.com/v2/query?appid=' + config.wolframApiKey + "&input=" + encodeURIComponent(query) + "&format=plaintext", function (error, response, body) {
     if (!error && response.statusCode == 200) {
       xmlParseString(body, function (err, result) {
@@ -43,11 +43,11 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
         }
 
         console.log(line);
-        matrix.sendNotice(queryRoom.roomId, line);
+        client.matrixClient.sendNotice(queryRoom.roomId, line);
       });
     } else {
       console.log('An error occured calculating:\n' + body);
-      matrix.sendNotice(queryRoom.roomId, 'An error occured calculating:\n' + body);
+      client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured calculating:\n' + body);
     }
 
 

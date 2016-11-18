@@ -3,7 +3,7 @@
 var exec = require('child_process').exec;
 
 
-exports.runQuery = function(matrix, query, querySender, queryRoom) {
+exports.runQuery = function(client, query, querySender, queryRoom) {
   var hostMatch, traceroute;
 
   console.log('Traceroute: Received query "' + query + '"...\n');
@@ -19,7 +19,7 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
       }
 
       console.log(line);
-      matrix.sendNotice(queryRoom.roomId, line);
+      client.matrixClient.sendNotice(queryRoom.roomId, line);
     });
   }
 };

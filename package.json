@@ -1,6 +1,6 @@
 {
   "name": "hello-matrix-bot",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A useful bot for Matrix.org.",
   "author": "Alex <ar@emergingculture.net>",
   "main": "matrix-bot.js",

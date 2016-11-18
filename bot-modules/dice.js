@@ -1,4 +1,4 @@
-exports.runQuery = function(matrix, query, querySender, queryRoom) {
+exports.runQuery = function(client, query, querySender, queryRoom) {
   var params, line;
 
   console.log('Dice called for ' + query);
@@ -10,7 +10,7 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
 
   var result = Math.floor((Math.random()*numSides)+1);
 
-  matrix.sendNotice(queryRoom.roomId, 'Our ' + numSides + '-sided dice rolled a ' + result + '.');
+  client.matrixClient.sendNotice(queryRoom.roomId, 'Our ' + numSides + '-sided dice rolled a ' + result + '.');
 };
 
 exports.getHelp = function(details) {

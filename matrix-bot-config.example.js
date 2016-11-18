@@ -45,6 +45,13 @@ exports.weather = {
 };
 
 
+// For webhook module
+exports.webhook = {
+  'myServer':                '<insert your webserver URL here (with https://)>',
+  'sqliteDatabase':          'webhook.sqlite'
+};
+
+
 // For wunderlist module
 exports.wunderlist = {
   'myServer':                '<insert your webserver URL here (with https://)>',

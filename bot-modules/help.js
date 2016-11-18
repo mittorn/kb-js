@@ -20,6 +20,9 @@ helpModules['traceroute'] = traceroute.getHelp;
 var weather = require("./weather.js");
 helpModules['weather'] = weather.getHelp;
 
+var weather = require("./webhook.js");
+helpModules['webhook'] = weather.getHelp;
+
 var whois = require("./whois.js");
 helpModules['whois'] = whois.getHelp;
 
@@ -27,7 +30,7 @@ var wunderlist = require("./wunderlist.js");
 helpModules['wunderlist'] = wunderlist.getHelp;
 
 
-exports.runQuery = function(matrix, query, querySender, queryRoom) {
+exports.runQuery = function(client, query, querySender, queryRoom) {
   var params, line;
 
   console.log('Helped called for ' + query);
@@ -49,5 +52,5 @@ exports.runQuery = function(matrix, query, querySender, queryRoom) {
   }
 
   console.log(line);
-  matrix.sendNotice(queryRoom.roomId, line);
+  client.matrixClient.sendNotice(queryRoom.roomId, line);
 };
