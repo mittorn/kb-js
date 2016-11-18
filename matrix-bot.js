@@ -25,6 +25,7 @@ botModules['help'] = require("./bot-modules/help.js");
 botModules['kanban'] = require("./bot-modules/kanban.js");
 botModules['traceroute'] = require("./bot-modules/traceroute.js");
 botModules['weather'] = require("./bot-modules/weather.js");
+botModules['webhook'] = require("./bot-modules/webhook.js");
 botModules['whois'] = require("./bot-modules/whois.js");
 botModules['wunderlist'] = require("./bot-modules/wunderlist.js");
 

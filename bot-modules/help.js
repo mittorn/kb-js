@@ -20,6 +20,9 @@ helpModules['traceroute'] = traceroute.getHelp;
 var weather = require("./weather.js");
 helpModules['weather'] = weather.getHelp;
 
+var weather = require("./webhook.js");
+helpModules['webhook'] = weather.getHelp;
+
 var whois = require("./whois.js");
 helpModules['whois'] = whois.getHelp;
 
