@@ -10,6 +10,7 @@ You can either use the “Hello Matrix” bot running on our server (see below f
 - Adding tasks to your Kanban board from [Kanban Tool](http://kanbantool.com/) and getting notified of task status changes
 - Tracerouting a given IP
 - Weather from [OpenWeatherMap](http://openweathermap.org/)
+- Defining arbitrary web hooks that, when triggered, send a configurable message to your room
 - Providing WHOIS information on a domain or IP address
 - Adding tasks and monitoring progress on [Wunderlist](https://www.wunderlist.com/) lists
 
@@ -68,6 +69,9 @@ The file `matrix-bot-config.js` knows the following configuration options for th
 
 - `weather` module: This module uses the OpenWeatherMap API. You can get a free API key from their website and need to paste this key into the `weatherApiKey` configuration option.
 
+- `webhook` module, `myServer` option: For providing the configuraiton interface and for actually receiving the web hook triggers, this module uses the integrated web server. For this configuration option, you need to provide the URL your reverse proxy forwards to `http://localhost:3001/matrix-bot/webhook/` (see above). For example, for our public instance this is set as `"https://www.emergingculture.net/matrix-bot/webhook/"`.
+- `webhook` module, `sqliteDatabase` option: The webhook module stores the configured webhooks in an SQLite database. This parameter specifies the path to the database, relative to the main folder, which you should have created before using the `create_databases.sh` shell script (see above). The shell script by default creates `webhook.sqlite`.
+
 - `wunderlist` module, `myServer` option: This module integrates with [Wunderlist](https://www.wunderlist.com/). As it uses the integrated web server of Hello Matrix for authentication purposes, you need to provide the URL your reverse proxy forwards to `http://localhost:3001/matrix-bot/wunderlist/` (see above). For example, for our public instance this is set as `"https://www.emergingculture.net/matrix-bot/wunderlist/"`.
 - `wunderlist` module, `myServerWunderlist` option: We use callbacks from Wunderlist to notify rooms of completed tasks. Unfortunately, in our testing the Wunderlist API did not support https connections to our endpoint. If the same problem happens for you, you can use this option to provide an http url to the endpoint in `myServer`. For example, for our public instance this is set as `"http://www.emergingculture.net/matrix-bot/wunderlist/"` (note the missing `s`).
 - `wunderlist` module, `wunderlistClientID` option: The [Wunderlist API](https://developer.wunderlist.com/) requires a client ID that can be obtained by registering for free on their developer portal.
@@ -110,7 +114,7 @@ At the moment, the following is unsupported by this bot:
 ## Roadmap
 There are a lot of cool integrations that would be interesting to add, but for the moment the following items are high on the agenda and will be implemented "as time permits" in this order:
 
-1. Generic webhook functionality (allows other tools to post to a room via webhook)
+1. [DONE] Generic webhook functionality (allows other tools to post to a room via webhook)
 2. Support for providing statistics on room discussion, similar to what [pigs](http://pisg.sourceforge.net/) does for IRC chats
 3. Support for end-to-end encrypted rooms
 4. Simple reminder / alarm clock functionality
