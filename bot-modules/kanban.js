@@ -116,7 +116,7 @@ var doMonitorBoards = function(client) {
           d.boardId = undefined;
 
           // Inform room.
-          client.matrixClient.sendNotice(d.roomId, '[Kanban] We stopped monitoring the board "' + d.boardName + '" because Kanban Tool reported that either the given board does not exist anymore or the stored API key is no longer valid. Please re-authenticate and follow the board again.');
+          client.sendBotNotice(d.roomId, '[Kanban] We stopped monitoring the board "' + d.boardName + '" because Kanban Tool reported that either the given board does not exist anymore or the stored API key is no longer valid. Please re-authenticate and follow the board again.');
 
           // Remove from database.
           return dbRun('DELETE FROM followed_boards WHERE room_id=? AND matrix_user=? AND board_id=?', d.roomId, d.matrixUser, myBoardId);
@@ -135,7 +135,7 @@ var doMonitorBoards = function(client) {
         var newLastCheckTime = d.lastCheck.getTime();
         res[1].forEach(function(item) {
           // Announce...
-          client.matrixClient.sendNotice(d.roomId, '[Kanban ' + d.boardName + '] ' + item.changelog.description);
+          client.sendBotNotice(d.roomId, '[Kanban ' + d.boardName + '] ' + item.changelog.description);
 
           // Date...
           var myDateTime = Date.parse(item.changelog.created_at);
@@ -222,7 +222,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
     } else if (req[0] == 'add') {
       // Add new card to Kanban board
       if (!req[1] || !req[2]) {
-        client.matrixClient.sendNotice(queryRoom.roomId, 'You have to specify board list to be added to and the text of the item.'); // TODO: support default boards
+        client.sendBotNotice(queryRoom.roomId, 'You have to specify board list to be added to and the text of the item.'); // TODO: support default boards
       } else {
         var boardSearch = req[1].match(/^"?(.*?)"?$/)[1];
         var itemToAdd = req[2].match(/^"?(.*?)"?$/)[1];
@@ -261,11 +261,11 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
           function (res) {
             console.log('Kanban task successfully added:');
             console.log(res);
-            client.matrixClient.sendNotice(queryRoom.roomId, res);
+            client.sendBotNotice(queryRoom.roomId, res);
           },
           function (err) {
             console.log('Kanban error: ' + err);
-            client.matrixClient.sendNotice(queryRoom.roomId, err);
+            client.sendBotNotice(queryRoom.roomId, err);
           }
         );
       }
@@ -273,7 +273,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
     } else if (req[0] == 'follow') {
       // Start monitoring Kanban board for changes
       if (!req[1]) {
-        client.matrixClient.sendNotice(queryRoom.roomId, 'You have to specify the board which should be monitored for changes.');
+        client.sendBotNotice(queryRoom.roomId, 'You have to specify the board which should be monitored for changes.');
       } else {
         boardSearch = req[1];
         var boardData = undefined;
@@ -310,11 +310,11 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
         ).then(
           function () {
             console.log('Now monitoring Kanban board "' + boardData.boardName + '".');
-            client.matrixClient.sendNotice(queryRoom.roomId, 'We are now monitoring the Kanban board ' + boardData.boardName + ' for changes and will notify this room.');
+            client.sendBotNotice(queryRoom.roomId, 'We are now monitoring the Kanban board ' + boardData.boardName + ' for changes and will notify this room.');
           },
           function (err) {
             console.log('Kanban error: ' + err);
-            client.matrixClient.sendNotice(queryRoom.roomId, '[Kanban] An error occured: ' + err.toString());
+            client.sendBotNotice(queryRoom.roomId, '[Kanban] An error occured: ' + err.toString());
           }
         );
       }
@@ -322,7 +322,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
     } else if (req[0] == 'unfollow') {
       // Stop monitoring Kanban board for changes
       if (!req[1]) {
-        client.matrixClient.sendNotice(queryRoom.roomId, 'You have to specify the board which should be unfollowed.');
+        client.sendBotNotice(queryRoom.roomId, 'You have to specify the board which should be unfollowed.');
       } else {
         boardSearch = req[1];
 
@@ -348,7 +348,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
           else {
             followedBoards = 'We are currently following these boards:\n' + followedBoards;
           }
-          client.matrixClient.sendNotice(queryRoom.roomId, 'No such Kanban board is currently followed in this room. ' + followedBoards);
+          client.sendBotNotice(queryRoom.roomId, 'No such Kanban board is currently followed in this room. ' + followedBoards);
           return;
         }
 
@@ -362,7 +362,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
           monitorBoards.splice(boardIdx, 1);
 
           // Ok, we are done.
-          client.matrixClient.sendNotice(queryRoom.roomId, 'Ok. We are no longer following changes on the Kanban board ' + boardData.boardName + '.');
+          client.sendBotNotice(queryRoom.roomId, 'Ok. We are no longer following changes on the Kanban board ' + boardData.boardName + '.');
         });
       }
     }
@@ -443,7 +443,7 @@ exports.webRequest = function(client, path, query, res) {
         )
         .then(
         function(auth_request) {
-          client.matrixClient.sendNotice(auth_request['room_id'], 'Your Kanban Tool API key has been saved.');
+          client.sendBotNotice(auth_request['room_id'], 'Your Kanban Tool API key has been saved.');
           res.send('Your Kanban Tool API key has been saved and you can now return to Matrix.');
         },
         function(err) {

@@ -21,7 +21,7 @@ var formatTime = function(dt) {
 
 exports.runQuery = function(client, query, querySender, queryRoom) {
   if(!query) {
-    client.matrixClient.sendNotice(queryRoom.roomId, 'Please specify the city for which you want a forecast.');
+    client.sendBotNotice(queryRoom.roomId, 'Please specify the city for which you want a forecast.');
   }
 
   request({url: 'http://api.openweathermap.org/data/2.5/forecast?q=' + encodeURIComponent(query) + '&mode=json&units=metric&appid=' + encodeURIComponent(config.weatherApiKey), method: 'GET', json: true }, function (error, response, body) {
@@ -40,14 +40,14 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
       line += '[From OpenWeatherMap, all times in UTC]';
 
       console.log(line);
-      client.matrixClient.sendNotice(queryRoom.roomId, line);
+      client.sendBotNotice(queryRoom.roomId, line);
 
     } else if (!error && response.statusCode == 200 && body && body['cod'] && body['cod'] !== '200') {
       console.log(body['message'] + ' (' + body['cod'] + ')');
-      client.matrixClient.sendNotice(queryRoom.roomId, body['message']);
+      client.sendBotNotice(queryRoom.roomId, body['message']);
     } else {
       console.log('An error occured obtaining weather data:\n' + body);
-      client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured obtaining weather data:\n' + body);
+      client.sendBotNotice(queryRoom.roomId, 'An error occured obtaining weather data:\n' + body);
     }
   })
 };

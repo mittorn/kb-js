@@ -10,7 +10,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
 
   var result = Math.floor((Math.random()*numSides)+1);
 
-  client.matrixClient.sendNotice(queryRoom.roomId, 'Our ' + numSides + '-sided dice rolled a ' + result + '.');
+  client.sendBotNotice(queryRoom.roomId, 'Our ' + numSides + '-sided dice rolled a ' + result + '.');
 };
 
 exports.getHelp = function(details) {

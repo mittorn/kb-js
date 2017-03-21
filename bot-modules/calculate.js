@@ -43,11 +43,11 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
         }
 
         console.log(line);
-        client.matrixClient.sendNotice(queryRoom.roomId, line);
+        client.sendBotNotice(queryRoom.roomId, line);
       });
     } else {
       console.log('An error occured calculating:\n' + body);
-      client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured calculating:\n' + body);
+      client.sendBotNotice(queryRoom.roomId, 'An error occured calculating:\n' + body);
     }
 
 

@@ -52,5 +52,5 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
   }
 
   console.log(line);
-  client.matrixClient.sendNotice(queryRoom.roomId, line);
+  client.sendBotNotice(queryRoom.roomId, line);
 };

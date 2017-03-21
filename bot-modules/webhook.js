@@ -35,7 +35,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
 
   // Does the user have power level 100 in the room?
   if(queryRoom.getMember(querySender).powerLevelNorm !== 100) {
-    client.matrixClient.sendNotice(queryRoom.roomId, 'You need to have administrator privileges (power level 100) in this room in order to manage the defined webhooks.');
+    client.sendBotNotice(queryRoom.roomId, 'You need to have administrator privileges (power level 100) in this room in order to manage the defined webhooks.');
     return;
   }
 
@@ -53,7 +53,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
       console.log('Error while generating admin_request for webhook:');
       console.log(err);
 
-      client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured while trying to grant acesss to the webhook management. Please try again later or get help in #hello-matrix-bot@matrix.org.');
+      client.sendBotNotice(queryRoom.roomId, 'An error occured while trying to grant acesss to the webhook management. Please try again later or get help in #hello-matrix-bot@matrix.org.');
     })
     .done();
 };
@@ -255,7 +255,7 @@ exports.webRequest = function(client, path, query, res) {
       });
 
       // Send to room...
-      client.matrixClient.sendNotice(webhook['room_id'], messageToSend + '\n\n[Webhook: ' + webhook['name'] + ']');
+      client.sendBotNotice(webhook['room_id'], messageToSend + '\n\n[Webhook: ' + webhook['name'] + ']');
 
       // Send "OK." response.
       res.send('OK.');

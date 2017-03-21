@@ -106,7 +106,6 @@ Hello Matrix will respond with an explanation of all the commands to be performe
 
 ## Current Limitations
 At the moment, the following is unsupported by this bot:
-- The bot does not support rooms with end-to-end encryption enabled.
 - The bot does not know how to leave rooms - you have to ban him to keep him out of any room you have invited him into.
 - The bot cannot be restricted to only respond to joins by approved users. This means that when you set-up your own bot, everyone can invite him into new rooms and use the provided functionality.
 
@@ -114,11 +113,10 @@ At the moment, the following is unsupported by this bot:
 ## Roadmap
 There are a lot of cool integrations that would be interesting to add, but for the moment the following items are high on the agenda and will be implemented "as time permits" in this order:
 
-1. [DONE] Generic webhook functionality (allows other tools to post to a room via webhook)
-2. Support for providing statistics on room discussion, similar to what [pigs](http://pisg.sourceforge.net/) does for IRC chats
-3. Zapier integration
-4. Support for end-to-end encrypted rooms
-5. Simple reminder / alarm clock functionality
+1. "Send DM" webhook for admins (provides a simple webhook to send DMs to arbitrary Matrix users)
+2. Zapier integration
+3. Support for providing statistics on room discussion, similar to what [pigs](http://pisg.sourceforge.net/) does for IRC chats
+4. Simple reminder / alarm clock functionality
 
 ## Questions?
 If you have any questions, feel free to join [\#hello-matrix-bot:matrix.org](https://matrix.to/#/#hello-matrix-bot:matrix.org) for answers. If any questions come up frequently, we will add them here.
