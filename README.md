@@ -62,18 +62,18 @@ The file `matrix-bot-config.js` knows the following configuration options for th
 
 - `calculate` module: This module hands any calculations off to Wolfram Alpha, using their [public API](http://products.wolframalpha.com/api/). This requires an API key, which you can get for free from their website for non-commercial development use and up to 2’000 calls per month. This key needs to be entered into the `wolframApiKey` parameter.
 
-- `kanban` module, `myServer`:  This module integrates with [Kanban Tool](http://kanbantool.com/). As it uses the integrated web server of Hello Matrix for authentication purposes, you need to provide the URL your reverse proxy forwards to `http://localhost:3001/matrix-bot/kanban/` (see above). For example, for our public instance this is set as `"https://www.emergingculture.net/matrix-bot/kanban/"`.
+- `kanban` module, `myServer`:  This module integrates with [Kanban Tool](http://kanbantool.com/). As it uses the integrated web server of Hello Matrix for authentication purposes, you need to provide the URL your reverse proxy forwards to `http://localhost:3001/matrix-bot/kanban/` (see above). For example, for our public instance this is set as `"https://one.hello-matrix.net/matrix-bot/kanban/"`.
 - `kanban` module, `sqliteDatabase`: The Kanban module stores persistent information (which boards to monitor and authentication credentials) in an SQLite database. This parameter specifies the path to the database, relative to the main folder, which you should have created before using the `create_databases.sh` shell script (see above). The shell script by default creates `kanban.sqlite`.
 
 - `twitter` module: Please ignore the configuration options there for now. The Twitter module is not yet operational.
 
 - `weather` module: This module uses the OpenWeatherMap API. You can get a free API key from their website and need to paste this key into the `weatherApiKey` configuration option.
 
-- `webhook` module, `myServer` option: For providing the configuraiton interface and for actually receiving the web hook triggers, this module uses the integrated web server. For this configuration option, you need to provide the URL your reverse proxy forwards to `http://localhost:3001/matrix-bot/webhook/` (see above). For example, for our public instance this is set as `"https://www.emergingculture.net/matrix-bot/webhook/"`.
+- `webhook` module, `myServer` option: For providing the configuraiton interface and for actually receiving the web hook triggers, this module uses the integrated web server. For this configuration option, you need to provide the URL your reverse proxy forwards to `http://localhost:3001/matrix-bot/webhook/` (see above). For example, for our public instance this is set as `"https://one.hello-matrix.net/matrix-bot/webhook/"`.
 - `webhook` module, `sqliteDatabase` option: The webhook module stores the configured webhooks in an SQLite database. This parameter specifies the path to the database, relative to the main folder, which you should have created before using the `create_databases.sh` shell script (see above). The shell script by default creates `webhook.sqlite`.
 
-- `wunderlist` module, `myServer` option: This module integrates with [Wunderlist](https://www.wunderlist.com/). As it uses the integrated web server of Hello Matrix for authentication purposes, you need to provide the URL your reverse proxy forwards to `http://localhost:3001/matrix-bot/wunderlist/` (see above). For example, for our public instance this is set as `"https://www.emergingculture.net/matrix-bot/wunderlist/"`.
-- `wunderlist` module, `myServerWunderlist` option: We use callbacks from Wunderlist to notify rooms of completed tasks. Unfortunately, in our testing the Wunderlist API did not support https connections to our endpoint. If the same problem happens for you, you can use this option to provide an http url to the endpoint in `myServer`. For example, for our public instance this is set as `"http://www.emergingculture.net/matrix-bot/wunderlist/"` (note the missing `s`).
+- `wunderlist` module, `myServer` option: This module integrates with [Wunderlist](https://www.wunderlist.com/). As it uses the integrated web server of Hello Matrix for authentication purposes, you need to provide the URL your reverse proxy forwards to `http://localhost:3001/matrix-bot/wunderlist/` (see above). For example, for our public instance this is set as `"https://one.hello-matrix.net/matrix-bot/wunderlist/"`.
+- `wunderlist` module, `myServerWunderlist` option: We use callbacks from Wunderlist to notify rooms of completed tasks. Unfortunately, in our testing the Wunderlist API did not support https connections to our endpoint. If the same problem happens for you, you can use this option to provide an http url to the endpoint in `myServer`. For example, for our public instance this is set as `"http://one.hello-matrix.net/matrix-bot/wunderlist/"` (note the missing `s`).
 - `wunderlist` module, `wunderlistClientID` option: The [Wunderlist API](https://developer.wunderlist.com/) requires a client ID that can be obtained by registering for free on their developer portal.
 - `wunderlist` module, `wunderlistClientSecret` option: The [Wunderlist API](https://developer.wunderlist.com/) requires a client secret that can be obtained by registering for free on their developer portal.
 - `wunderlist` module, `sqliteDatabase` option: The Wunderlist module stores persistent information (authentication credentials) in an SQLite database. This parameter specifies the path to the database, relative to the main folder, which you should have created before using the `create_databases.sh` shell script (see above). The shell script by default creates `wunderlist.sqlite`.
@@ -106,7 +106,6 @@ Hello Matrix will respond with an explanation of all the commands to be performe
 
 ## Current Limitations
 At the moment, the following is unsupported by this bot:
-- The bot does not support rooms with end-to-end encryption enabled.
 - The bot does not know how to leave rooms - you have to ban him to keep him out of any room you have invited him into.
 - The bot cannot be restricted to only respond to joins by approved users. This means that when you set-up your own bot, everyone can invite him into new rooms and use the provided functionality.
 
@@ -114,11 +113,10 @@ At the moment, the following is unsupported by this bot:
 ## Roadmap
 There are a lot of cool integrations that would be interesting to add, but for the moment the following items are high on the agenda and will be implemented "as time permits" in this order:
 
-1. [DONE] Generic webhook functionality (allows other tools to post to a room via webhook)
-2. Support for providing statistics on room discussion, similar to what [pigs](http://pisg.sourceforge.net/) does for IRC chats
-3. Support for end-to-end encrypted rooms
+1. "Send DM" webhook for admins (provides a simple webhook to send DMs to arbitrary Matrix users)
+2. Zapier integration
+3. Support for providing statistics on room discussion, similar to what [pigs](http://pisg.sourceforge.net/) does for IRC chats
 4. Simple reminder / alarm clock functionality
-
 
 ## Questions?
 If you have any questions, feel free to join [\#hello-matrix-bot:matrix.org](https://matrix.to/#/#hello-matrix-bot:matrix.org) for answers. If any questions come up frequently, we will add them here.

@@ -40,7 +40,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
     if(req[1] == 'send') {
       console.log('Bitmessage: Processing send request...');
       if(!req[3] || !req[4]) {
-        client.matrixClient.sendNotice(queryRoom.roomId, 'You have to specify the bitmessage ID and the message to be sent.');
+        client.sendBotNotice(queryRoom.roomId, 'You have to specify the bitmessage ID and the message to be sent.');
       } else {
         var recipientId = req[3];
         var message = req[4];
@@ -60,7 +60,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
             // Sends a method call to the XML-RPC server
             xmlrpcClient.methodCall('sendMessage', [recipientId, senderId, subjectBase64, messageBase64], function (error, value) {
               if(error) {
-                client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured trying to deliver your message. Please try again.');
+                client.sendBotNotice(queryRoom.roomId, 'An error occured trying to deliver your message. Please try again.');
                 console.log('An error occured communicating with Bitmessage API.');
                 console.log(error);
               } else {
@@ -70,7 +70,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
             });
 
           } else {
-            client.matrixClient.sendNotice(queryRoom.roomId, 'Bitmessage is not active for this room. Run "!bitmessage on" first.');
+            client.sendBotNotice(queryRoom.roomId, 'Bitmessage is not active for this room. Run "!bitmessage on" first.');
           }
         });
       }
@@ -84,15 +84,15 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
             // Reactivate
             db.run("UPDATE bm_rooms SET active=1 WHERE room = ?", queryRoom.roomId, function (err) {
               if (err || this.changes === 0) {
-                client.matrixClient.sendNotice(queryRoom.roomId, 'I could not reactivate bitmessage for this room because an error occured.');
+                client.sendBotNotice(queryRoom.roomId, 'I could not reactivate bitmessage for this room because an error occured.');
                 console.log(err);
               } else {
-                client.matrixClient.sendNotice(queryRoom.roomId, 'This room is now listening to bitmessages at ' + rows[0].bm_id + '.');
+                client.sendBotNotice(queryRoom.roomId, 'This room is now listening to bitmessages at ' + rows[0].bm_id + '.');
               }
             });
           } else {
             // Do nothing
-            client.matrixClient.sendNotice(queryRoom.roomId, 'This room is already listening to bitmessages at ' + rows[0].bm_id + '.');
+            client.sendBotNotice(queryRoom.roomId, 'This room is already listening to bitmessages at ' + rows[0].bm_id + '.');
           }
         } else {
           // We need to create a new addresse via the API...
@@ -103,14 +103,14 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
               // ... and add to the database ...
               db.run("INSERT INTO bm_rooms (room, bm_id, active) VALUES (?, ?, 1)", queryRoom.roomId, value, function (err) {
                 if (err) {
-                  client.matrixClient.sendNotice(queryRoom.roomId, 'I could not store the bitmessage ID for this room because an error occured. Please try again later.');
+                  client.sendBotNotice(queryRoom.roomId, 'I could not store the bitmessage ID for this room because an error occured. Please try again later.');
                   console.log(err);
                 } else {
-                  client.matrixClient.sendNotice(queryRoom.roomId, 'This room is now listening to bitmessages at ' + value + '.');
+                  client.sendBotNotice(queryRoom.roomId, 'This room is now listening to bitmessages at ' + value + '.');
                 }
               });
             } else {
-              client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured trying to create a new bitmessage ID for this room. Please try again.');
+              client.sendBotNotice(queryRoom.roomId, 'An error occured trying to create a new bitmessage ID for this room. Please try again.');
               console.log('An error occured communicating with Bitmessage API.');
               console.log(error);
               console.log(value);
@@ -126,12 +126,12 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
       // no way to disable it using the API)
       db.run("UPDATE bm_rooms SET active=0 WHERE active = 1 AND room = ?", queryRoom.roomId, function (err) {
         if (err) {
-          client.matrixClient.sendNotice(queryRoom.roomId, 'I could not deactive bitmessage for this room because an error occured.');
+          client.sendBotNotice(queryRoom.roomId, 'I could not deactive bitmessage for this room because an error occured.');
           console.log(err);
         } else if (this.changes === 0) {
-          client.matrixClient.sendNotice(queryRoom.roomId, 'Nice try, but bitmessage isn\'t active for this room so I cannot switch it off!');
+          client.sendBotNotice(queryRoom.roomId, 'Nice try, but bitmessage isn\'t active for this room so I cannot switch it off!');
         } else {
-          client.matrixClient.sendNotice(queryRoom.roomId, 'Ok, I will keep the bitmessage ID for now but won\'t show anymore messages.');
+          client.sendBotNotice(queryRoom.roomId, 'Ok, I will keep the bitmessage ID for now but won\'t show anymore messages.');
         }
       });
     }
@@ -174,7 +174,7 @@ exports.webRequest = function(client, path, query, res) {
                   sendMessage = '[Bitmessage] Message with unsupported encoding type received from ' + message['fromAddress'] + '.';
                 }
 
-                client.matrixClient.sendNotice(row['room'], sendMessage).then(function() {
+                client.sendBotNotice(row['room'], sendMessage).then(function() {
                   // Ok, notice sending was successful, so we can trash the message.
                   xmlrpcClient.methodCall('trashMessage', [ message['msgid'] ], doNothing);
                 });

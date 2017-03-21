@@ -4,7 +4,8 @@
 exports.base = {
   'botBaseUrl':       'https://matrix.org',
   'botUserId':        '<insert matrix user ID here>',
-  'botAccessToken':   '<insert matrix access token here>'
+  'botPassword':      '<insert bot password here (currently only password auth supported)>',
+  'localStorage':     '<insert path to use for localstorage (encryption keys) here, e.g. ./localstorage>'
 };
 
 

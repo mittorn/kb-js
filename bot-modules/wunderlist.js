@@ -80,7 +80,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
       getUserToken(querySender, function(auth_token) {
         if(auth_token) {
           // User already logged in, ask user to log out first.
-          client.matrixClient.sendNotice(queryRoom.roomId, 'It seems you are already logged into Wunderlist. Please use !wunderlist logout if you want to logout and try to log in again.');
+          client.sendBotNotice(queryRoom.roomId, 'It seems you are already logged into Wunderlist. Please use !wunderlist logout if you want to logout and try to log in again.');
         } else {
           // Okay, proceed with login.
 
@@ -90,10 +90,10 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
           db.run("INSERT INTO auth_requests (id, matrix_user, room_id, secret_key, requested_at) VALUES (?, ?, ?, ?, ?)", auth_request, querySender, queryRoom.roomId, getGUID(), new Date(), function(err) {
             if(err) {
               console.log('An error occured with SQLite3: ' + err);
-              client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured obtaining the authentication request.');
+              client.sendBotNotice(queryRoom.roomId, 'An error occured obtaining the authentication request.');
             } else {
               // Return the URL the user can use to authenticate with Wunderlist...
-              client.matrixClient.sendNotice(queryRoom.roomId, 'Please authenticate with Wunderlist here: ' + config.myServer + 'login?auth_request=' + encodeURIComponent(auth_request));
+              client.sendBotNotice(queryRoom.roomId, 'Please authenticate with Wunderlist here: ' + config.myServer + 'login?auth_request=' + encodeURIComponent(auth_request));
             }
           });
 
@@ -105,15 +105,15 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
       db.run("DELETE FROM auth_tokens WHERE matrix_user=?", querySender, function(err) {
         if(err) {
           console.log('An error occured with SQLite3: ' + err);
-          client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured trying to log you out. Please get in touch with my supervisor.');
+          client.sendBotNotice(queryRoom.roomId, 'An error occured trying to log you out. Please get in touch with my supervisor.');
         } else {
-          client.matrixClient.sendNotice(queryRoom.roomId, 'You are no longer logged into Wunderlist (we have thrown away your authentification token).');
+          client.sendBotNotice(queryRoom.roomId, 'You are no longer logged into Wunderlist (we have thrown away your authentification token).');
         }
       });
     } else if(req[0] === 'add') {
       // Add new item
       if(!req[1] || !req[2]) {
-        client.matrixClient.sendNotice(queryRoom.roomId, 'You have to specify the list to be added to and the text of the item.'); // TODO: support default lists
+        client.sendBotNotice(queryRoom.roomId, 'You have to specify the list to be added to and the text of the item.'); // TODO: support default lists
       } else {
         var listSearch = req[1].match(/^"?(.*?)"?$/)[1];
         var itemToAdd = req[2].match(/^"?(.*?)"?$/)[1];
@@ -125,7 +125,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
 
         findWunderlists(querySender, listSearch, function(err, listId, listTitle, auth_token) {
           if(err) {
-            client.matrixClient.sendNotice(queryRoom.roomId, err);
+            client.sendBotNotice(queryRoom.roomId, err);
           } else {
             request(
               {
@@ -138,9 +138,9 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
               , function(err, res, body) {
                 if(err) {
                   console.log('Wunderlist: An error occured adding task: ' + err);
-                  client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured trying to add your task. Please try again later!');
+                  client.sendBotNotice(queryRoom.roomId, 'An error occured trying to add your task. Please try again later!');
                 } else {
-                  client.matrixClient.sendNotice(queryRoom.roomId, '[' + listTitle + '] ' + itemToAdd);
+                  client.sendBotNotice(queryRoom.roomId, '[' + listTitle + '] ' + itemToAdd);
                 }
 
               }
@@ -150,12 +150,12 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
       }
     } else if(req[0] === 'follow') {
       if(!req[1]) {
-        client.matrixClient.sendNotice(queryRoom.roomId, 'You have to specify the list you want to follow in this room.');
+        client.sendBotNotice(queryRoom.roomId, 'You have to specify the list you want to follow in this room.');
       } else {
         var listSearch = req[1].match(/^"?(.*?)"?$/)[1];
         findWunderlists(querySender, listSearch, function(err, listId, listTitle, auth_token) {
           if(err) {
-            client.matrixClient.sendNotice(queryRoom.roomId, err);
+            client.sendBotNotice(queryRoom.roomId, err);
           } else {
             // TODO: Do we already have a webhook on this list?
             db.all("SELECT * FROM monitors WHERE matrix_user = ? AND list_id = ?", querySender, listId, function(err, rows) {
@@ -163,15 +163,15 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
                 // Webhook already exists - maybe just need to add new room to it
                 if (rows.filter(function(d) { return d['matrix_room'] == queryRoom.roomId; }).length >= 1) {
                   // Room already exists - we are done
-                  client.matrixClient.sendNotice(queryRoom.roomId, 'We are already following the list ' + listTitle + '.');
+                  client.sendBotNotice(queryRoom.roomId, 'We are already following the list ' + listTitle + '.');
                 } else {
                   // Add new room
                   db.run("INSERT INTO monitors (matrix_room, matrix_user, list_id, list_title, webhook_id, secret_key) VALUES (?, ?, ?, ?, ?, ?)", queryRoom.roomId, querySender, listId, listTitle, rows[0]['webhook_id'], rows[0]['secret_key'], function(err) {
                     if(err) {
                       console.log('SQLite error: ' + err);
-                      client.matrixClient.sendNotice(queryRoom.roomId, 'An error occurde while trying to follow ' + listTitle + '. Please try again later.');
+                      client.sendBotNotice(queryRoom.roomId, 'An error occurde while trying to follow ' + listTitle + '. Please try again later.');
                     } else {
-                      client.matrixClient.sendNotice(queryRoom.roomId, 'We are now following the list ' + listTitle + '.');
+                      client.sendBotNotice(queryRoom.roomId, 'We are now following the list ' + listTitle + '.');
                     }
                   });
                 }
@@ -190,7 +190,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
                   , function(err, res, body) {
                     if(err) {
                       console.log('Wunderlist: An error occured obtaining the webhook for ths list: ' + err);
-                      client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured trying to obtain notifications from Wunderlist. Please try again later!');
+                      client.sendBotNotice(queryRoom.roomId, 'An error occured trying to obtain notifications from Wunderlist. Please try again later!');
                     } else {
                       console.log('Received reply from Wunderlist: ');
                       console.log(body);
@@ -198,9 +198,9 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
                       db.run("INSERT INTO monitors (matrix_room, matrix_user, list_id, list_title, webhook_id, secret_key) VALUES (?, ?, ?, ?, ?, ?)", queryRoom.roomId, querySender, listId, listTitle, body['id'], secret_key, function(err) {
                         if(err) {
                           console.log('SQLite error: ' + err);
-                          client.matrixClient.sendNotice(queryRoom.roomId, 'An error occurde while trying to follow ' + listTitle + '. Please try again later.');
+                          client.sendBotNotice(queryRoom.roomId, 'An error occurde while trying to follow ' + listTitle + '. Please try again later.');
                         } else {
-                          client.matrixClient.sendNotice(queryRoom.roomId, 'We are now following the list ' + listTitle + '.');
+                          client.sendBotNotice(queryRoom.roomId, 'We are now following the list ' + listTitle + '.');
                         }
                       });
                     }
@@ -214,19 +214,19 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
       }
     } else if(req[0] === 'unfollow') {
       if(!req[1]) {
-        client.matrixClient.sendNotice(queryRoom.roomId, 'You have to specify the list you want to unfollow in this room.');
+        client.sendBotNotice(queryRoom.roomId, 'You have to specify the list you want to unfollow in this room.');
       } else {
         var listSearch = req[1].match(/^"?(.*?)"?$/)[1];
         findWunderlists(querySender, listSearch, function(err, listId, listTitle, auth_token) {
           if(err) {
-            client.matrixClient.sendNotice(queryRoom.roomId, err);
+            client.sendBotNotice(queryRoom.roomId, err);
           } else {
             db.get('SELECT * FROM monitors WHERE matrix_room = ? AND matrix_user = ? AND list_id = ?', queryRoom.roomId, querySender, listId, function(err, row) {
               if(err) {
                 console.log('Wunderlist: An error occured obtaining the monitors for ths list: ' + err);
-                client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured trying to obtain existing follows. Please try again later!');
+                client.sendBotNotice(queryRoom.roomId, 'An error occured trying to obtain existing follows. Please try again later!');
               } else if(!row) {
-                client.matrixClient.sendNotice(queryRoom.roomId, 'You are not currently following the list ' + listTitle + '.');
+                client.sendBotNotice(queryRoom.roomId, 'You are not currently following the list ' + listTitle + '.');
               } else {
                 var myWebhook = row['webhook_id'];
 
@@ -235,7 +235,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
                   db.get("SELECT * FROM monitors WHERE webhook_id = ?", myWebhook, function(err, row) {
                     if(err) {
                       console.log('Wunderlist: An error occured: ' + err);
-                      client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured trying to obtain existing follows. Please try again later!');
+                      client.sendBotNotice(queryRoom.roomId, 'An error occured trying to obtain existing follows. Please try again later!');
                     } else {
                       if(!row) {
                         // Webhook is no longer needed - remove from Wunderlist
@@ -248,14 +248,14 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
                           , function(err, res, body) {
                             if(err) {
                               console.log('Wunderlist: An error occured removing the webhook for ths list: ' + err);
-                              client.matrixClient.sendNotice(queryRoom.roomId, 'An error occured removing the webhook from Wunderlist. Please try again later!');
+                              client.sendBotNotice(queryRoom.roomId, 'An error occured removing the webhook from Wunderlist. Please try again later!');
                             } else {
-                              client.matrixClient.sendNotice(queryRoom.roomId, 'We are now no longer following ' + listTitle + '.');
+                              client.sendBotNotice(queryRoom.roomId, 'We are now no longer following ' + listTitle + '.');
                             } // TODO: We need some kind of reversals / retries here - what happens if we have already deleted the monitor-entry but webhook removal fails?
                           }
                         );
                       } else {
-                        client.matrixClient.sendNotice(queryRoom.roomId, 'We are now no longer following ' + listTitle + '.');
+                        client.sendBotNotice(queryRoom.roomId, 'We are now no longer following ' + listTitle + '.');
                       }
                     }
                   });
@@ -266,10 +266,10 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
         });
       }
     } else {
-      client.matrixClient.sendNotice(queryRoom.roomId, 'I did not understand this request. Call !help wunderlist for more details.');
+      client.sendBotNotice(queryRoom.roomId, 'I did not understand this request. Call !help wunderlist for more details.');
     }
   } else {
-    client.matrixClient.sendNotice(queryRoom.roomId, 'I did not understand this request. Call !help wunderlist for more details.');
+    client.sendBotNotice(queryRoom.roomId, 'I did not understand this request. Call !help wunderlist for more details.');
   };
 
 
@@ -318,15 +318,15 @@ exports.webRequest = function(client, path, query, res) {
         }, function(err, res, body) {
           if(err || !body || !body['access_token']) {
             console.log('Wunderlist: Error retrieving access token:' + err);
-            client.matrixClient.sendNotice(row['room_id'], 'Sorry, there was a problem obtaining your Wunderlist access token. Please try again!');
+            client.sendBotNotice(row['room_id'], 'Sorry, there was a problem obtaining your Wunderlist access token. Please try again!');
           } else {
             db.run('INSERT INTO auth_tokens (matrix_user, auth_token, obtained_at) VALUES (?, ?, ?)', row['matrix_user'], body['access_token'], new Date(), function(err) {
               if(err) {
                 console.log('Wunderlist: Error writing to database:');
                 console.log(err);
-                client.matrixClient.sendNotice(row['room_id'], 'Sorry, there was a problem storing your Wunderlist access token. Please try again!');
+                client.sendBotNotice(row['room_id'], 'Sorry, there was a problem storing your Wunderlist access token. Please try again!');
               } else {
-                client.matrixClient.sendNotice(row['room_id'], 'Thank you! Your matrix user is now authenticated for use with Wunderlist.');
+                client.sendBotNotice(row['room_id'], 'Thank you! Your matrix user is now authenticated for use with Wunderlist.');
               }
             });
           }
@@ -350,11 +350,11 @@ exports.webRequest = function(client, path, query, res) {
           // TODO: other changes handling
           if(res.req.body.operation === 'create') {
             // New task
-            client.matrixClient.sendNotice(row['matrix_room'], '[' + row['list_title'] + '] New task: ' + res.req.body.after.title);
+            client.sendBotNotice(row['matrix_room'], '[' + row['list_title'] + '] New task: ' + res.req.body.after.title);
           } else if(res.req.body.operation === 'update' && res.req.body.before.completed === false && res.req.body.after.completed === true) {
             // Task completed
             // TODO: who completed task?
-            client.matrixClient.sendNotice(row['matrix_room'], '[' + row['list_title'] + '] Completed: ' + res.req.body.after.title);
+            client.sendBotNotice(row['matrix_room'], '[' + row['list_title'] + '] Completed: ' + res.req.body.after.title);
           }
         }
       });
