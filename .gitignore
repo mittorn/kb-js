@@ -6,4 +6,5 @@ localstorage/
 .DS_Store
 .idea
 *.log
+*.tmp
 *.swp
