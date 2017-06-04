@@ -18,6 +18,7 @@ if (typeof localStorage === "undefined" || localStorage === null) {
 }
 
 // matrix-js-sdk
+// var Olm = require("olm");
 var sdk = require("matrix-js-sdk");
 
 
@@ -137,7 +138,7 @@ loginPromise.then(function() {
 
         // Is it a bang?
         var botCommand;
-        if(botCommand = event.getContent().body.match(/!([a-z]+)( (.+))?/)) {
+        if(botCommand = event.getContent().body.match(/^\s*!([a-z]+)( (.+))?/)) {
           // Log to console
           console.log('Bang match: ' + botCommand[1] + ' ' + botCommand[3]);
 

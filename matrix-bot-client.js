@@ -53,7 +53,7 @@ exports.sendBotNotice = function(roomId, message) {
 
     } else {
       // We do not handle this error
-      throw err;
+      return q.reject(err);
     }
   });
 };
@@ -111,7 +111,13 @@ var getDMRoom = function(userId) {
 
     // What is the power level required to invite others in this room?
     var power_levels_event = room.getLiveTimeline().getState(sdk.EventTimeline.FORWARDS).getStateEvents('m.room.power_levels', '');
-    if(!power_levels_event.getContent().invite || power_levels_event.getContent().invite < 90) {
+
+    // DEBUG DEBUG
+    console.log('Received power_levels_event for room ' + room.roomId + '.');
+    console.log(power_levels_event);
+    // DEBUG DEBUG
+
+    if(!power_levels_event || !power_levels_event.getContent().invite || power_levels_event.getContent().invite < 90) {
       // Required power level to invite others is lower than 90.
       isSuitable = false;
     }
@@ -130,12 +136,26 @@ var getDMRoom = function(userId) {
       name: config.botUserId
     }).then(function(res) {
       // Ok, we have the room. Now we need to change the required power levels.
-      var powerLevelContent = exports.matrixClient.getRoom(res.room_id)
-        .getLiveTimeline().getState(sdk.EventTimeline.FORWARDS)
-        .getStateEvents('m.room.power_levels', '').getContent();
-
       // Change required power level for invites to 100.
-      powerLevelContent.invite = 100;
+      powerLevelContent = {"ban":     50,
+                           "kick":    50,
+                           "redact":  50,
+                           "invite": 100,
+                           "events_default": 0,
+                           "state_default": 50,
+                           "users_default": 0,
+                           "users": {
+                           }, 
+                           "events": {
+                             "m.room.avatar": 50,
+                             "m.room.name": 50,
+                             "m.room.canonical_alias": 50,
+                             "m.room.history_visibility": 100,
+                             "m.room.power_levels": 100
+                           }
+                          };
+
+      powerLevelContent.users[config.botUserId] = 100;
 
       return exports.matrixClient.sendStateEvent(res.room_id, 'm.room.power_levels', powerLevelContent).then(
         function() {

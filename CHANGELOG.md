@@ -1,5 +1,10 @@
 # Changelog for "Hello Matrix" Bot
 
+## Changes in v0.0.4 (2017-06-03)
+
+- Quick fix pinning matrix-js-sdk to 0.7.4 until we have figured out how best to ugprade to 0.7.10 (with libolm removed)
+- Small bugfixes
+
 
 ## Changes in v0.0.3 (2017-03-21)
 
