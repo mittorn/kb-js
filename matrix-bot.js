@@ -29,7 +29,7 @@ try {
 
 // Loading Matrix SDK
 var sdk = require("matrix-js-sdk");
-
+client.matrixSDK = sdk;
 
 
 ///// CONFIGURATION OF BOT-MODULES
@@ -92,7 +92,6 @@ loginPromise.then(function() {
     sessionStore: new sdk.WebStorageSessionStore(localStorage),
     deviceId: localStorage.getItem('deviceId')
   });
-
 
   // Automatically join rooms when invited
   client.matrixClient.on("RoomMember.membership", function(event, member) {

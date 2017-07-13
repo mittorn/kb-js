@@ -19,7 +19,7 @@ exports.webRequest = function(client, path, query, res) {
   console.log('SendDM: Received web request for ' + path);
   
   // We don't do anything if we dont have a secret key set (or it is the default).
-  if(config.secretKey == undefined || config.secretKey === '' ||
+  if(config === undefined || config.secretKey === undefined || config.secretKey === '' ||
      config.secretKey === '<insert secret key for HMAC to authorise DMs here>') {
       console.log('WARNING: Someone has tried to access the senddm module but no secret key is set!');
       console.log('WARNING: We have cancelled the request.');
@@ -33,30 +33,35 @@ exports.webRequest = function(client, path, query, res) {
       // Parse data provided...
       var sendData = (res.req.method === 'POST' ? res.req.body : query);
 
-      // Compute HMAC.
-      var shaObj = new jsSHA("SHA-512", "TEXT");
-      shaObj.setHMACKey(config.secretKey, "TEXT");
-      shaObj.update(sendData.recipient);
-      shaObj.update(sendData.message);
-      var hmac = shaObj.getHMAC("HEX");
-      
       // Valid MXID? (From Matrix spec and https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address)
       var validMxidRe = /^@([\x21-\x7E]+):(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
       
-      // Validate provided data and message (provided via POST json or query parameters).
-      if(sendData.recipient === undefined || sendData.message === undefined || sendData.hmac === undefined ||
-        !validMxidRe.test(sendData.recipient) || sendData.hmac !== hmac) {
+      // Valid data provided?
+      if(sendData.recipient === undefined || sendData.message === undefined || sendData.hmac === undefined || !validMxidRe.test(sendData.recipient)) {
         res.status(403);
         res.send('Invalid data.');
-        return;
+        return;        
       } else {
-        // Send direct message...
-        client.sendDM(sendData.recipient, sendData.message);
-
-        // Send "OK." response.
-        res.send('OK.');
+        // Compute HMAC.
+        var shaObj = new jsSHA("SHA-512", "TEXT");
+        shaObj.setHMACKey(config.secretKey, "TEXT");
+        shaObj.update(sendData.recipient);
+        shaObj.update(sendData.message);
+        var hmac = shaObj.getHMAC("HEX");
         
-        return;
+        if(sendData.hmac !== hmac) {
+          res.status(403);
+          res.send('Invalid key.');
+          return;          
+        } else {
+          // Send direct message...
+          client.sendDM(sendData.recipient, sendData.message);
+
+          // Send "OK." response.
+          res.send('OK.');
+          
+          return;
+        }
       }
       
   } else {

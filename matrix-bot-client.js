@@ -3,7 +3,9 @@ var config = require('./matrix-bot-config.js').base;
 
 // Load required modules
 var q = require('q');
-var sdk = require('matrix-js-sdk');
+
+// We use the matrix SDK that needs to be set by the requiring module
+exports.matrixSDK = {};
 
 // We use a matrix client that needs to be set by the requiring module
 exports.matrixClient = {};
@@ -110,7 +112,7 @@ var getDMRoom = function(userId) {
     });
 
     // What is the power level required to invite others in this room?
-    var power_levels_event = room.getLiveTimeline().getState(sdk.EventTimeline.FORWARDS).getStateEvents('m.room.power_levels', '');
+    var power_levels_event = room.getLiveTimeline().getState(exports.matrixSDK.EventTimeline.FORWARDS).getStateEvents('m.room.power_levels', '');
 
     // DEBUG DEBUG
     console.log('Received power_levels_event for room ' + room.roomId + '.');
