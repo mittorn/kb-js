@@ -31,11 +31,15 @@ The advantage of using our instance is of course that you do not have to install
 If the points above have made you interested in running your own Hello Matrix bot, you are welcome to do so - either for your private use or as a public bot that others can talk to as well (note that at the moment you cannot really restrict usage of the bot).
 You can clone our gitlab repository:
 
+```
 git clone https://gitlab.com/argit/hello-matrix-bot.git
+```
 
 Afterwards, you need to obtain the Node packages (such as matrix-js-sdk) required to run Hello Matrix. Make sure you have installed the latest version of [Node](https://nodejs.org/en/), which should come with the npm package manager. Then change into the hello-matrix-bot directory and run:
 
+```
 npm install
+```
 
 Now you are ready to set-up the configuration for your Hello Matrix bot. Copy the `matrix-bot-config.example.js` file in the main directory as `matrix-bot-config.js` in the same directory. Afterwards you need to edit these file to provide the user credentials which Hello Matrix should use to authenticate with the home server you want to use and also to provide a variety of API keys required for the different services. The section on Hello Matrix configuration below explains the different configuration options.
 
@@ -43,13 +47,17 @@ If you do not need some of these services and thus do not want to go through the
 
 Some modules use SQLite databases to persist data such as authentication tokens or which data Hello Matrix needs to monitor. To create empty databases for all current modules, you need to ensure that the `sqlite3` utility is installed and in your path and then run the following shell script from the main Hello Matrix path:
 
+```
 ./create_databases.sh
+```
 
 Hello Matrix comes with a web server to support web hooks and various authentication schemes. By default, the server listens on port 3001 on `localhost` only. The idea is that you can put a reverse proxy (such as nginx or the awesome [Caddy](https://caddyserver.com/)) in front of Hello Matrix to run multiple services on the same host and also to provide TLS encryption (which you should!). Please refer to the documentation of your favorite reverse proxy for details on how to proxy a URL of your choice to `http://localhost:3001/`.
 
 Finally, you can launch your very own Hello Matrix bot using the start command:
 
+```
 npm start
+```
 
 
 ### Hello Matrix Configuration Keys
@@ -125,7 +133,7 @@ There are a lot of cool integrations that would be interesting to add, but for t
 
 1. Zapier integration
 2. Gitlab integration
-3. Support for providing statistics on room discussion, similar to what [pigs](http://pisg.sourceforge.net/) does for IRC chats
+3. Support for providing statistics on room discussion, similar to what [pisg](http://pisg.sourceforge.net/) does for IRC chats
 4. Simple reminder / alarm clock functionality
 
 
