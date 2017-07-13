@@ -30,6 +30,12 @@ exports.kanban = {
 };
 
 
+// For senddm module
+exports.senddm = {
+  'secretKey':       '<insert secret key for HMAC to authorise DMs here>'
+};
+
+
 // For twitter module
 exports.twitter = {
   consumer_key: '<insert Twitter consumer key here>',

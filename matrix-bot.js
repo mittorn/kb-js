@@ -41,6 +41,7 @@ botModules['calculate'] = require("./bot-modules/calculate.js");
 botModules['dice'] = require('./bot-modules/dice.js');
 botModules['help'] = require("./bot-modules/help.js");
 botModules['kanban'] = require("./bot-modules/kanban.js");
+botModules['senddm'] = require("./bot-modules/senddm.js");
 botModules['traceroute'] = require("./bot-modules/traceroute.js");
 botModules['weather'] = require("./bot-modules/weather.js");
 botModules['webhook'] = require("./bot-modules/webhook.js");
