@@ -95,7 +95,7 @@ loginPromise.then(function() {
 
   // Automatically join rooms when invited
   client.matrixClient.on("RoomMember.membership", function(event, member) {
-    if (member.membership === "invite" && member.userId === config.botUserId) {
+    if (member.membership === "invite" && member.userId === localStorage.getItem('userId')) {
       console.log("Received invite for %s from %s. Auto-joining...", member.roomId, event.getSender());
 
       client.matrixClient.joinRoom(member.roomId)
@@ -116,7 +116,7 @@ loginPromise.then(function() {
         console.log('An error occured while trying to reject / process room invites:' + JSON.stringify(err));
       })
         .done();
-    } else if(member.userId === config.botUserId) {
+    } else if(member.userId === localStorage.getItem('userId')) {
       console.log("Received UNPROCESSED membership event of type %s for myself in room %s from %s.", member.membership, member.roomId, event.getSender());
 
       // TODO: Enable processing of other events (kicks, bans, etc.)
@@ -129,7 +129,7 @@ loginPromise.then(function() {
 
       // Listen for messages starting with a bang (!)
       client.matrixClient.on("Room.timeline", function(event, room, toStartOfTimeline) {
-        if (toStartOfTimeline || event.getSender() === config.botUserId) {
+        if (toStartOfTimeline || event.getSender() === localStorage.getItem('userId')) {
           return; // don't use stale results or own data
         }
         if (event.getType() !== "m.room.message") {
