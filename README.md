@@ -11,6 +11,7 @@ You can either use the “Hello Matrix” bot running on our server (see below f
 - Tracerouting a given IP
 - Weather from [OpenWeatherMap](http://openweathermap.org/)
 - Defining arbitrary web hooks that, when triggered, send a configurable message to your room
+- Using a specific webhook to send direct messages (private 1:1 chats) to Matrix users
 - Providing WHOIS information on a domain or IP address
 - Adding tasks and monitoring progress on [Wunderlist](https://www.wunderlist.com/) lists
 
@@ -65,6 +66,8 @@ The file `matrix-bot-config.js` knows the following configuration options for th
 - `kanban` module, `myServer`:  This module integrates with [Kanban Tool](http://kanbantool.com/). As it uses the integrated web server of Hello Matrix for authentication purposes, you need to provide the URL your reverse proxy forwards to `http://localhost:3001/matrix-bot/kanban/` (see above). For example, for our public instance this is set as `"https://one.hello-matrix.net/matrix-bot/kanban/"`.
 - `kanban` module, `sqliteDatabase`: The Kanban module stores persistent information (which boards to monitor and authentication credentials) in an SQLite database. This parameter specifies the path to the database, relative to the main folder, which you should have created before using the `create_databases.sh` shell script (see above). The shell script by default creates `kanban.sqlite`.
 
+- `senddm` module: You need to provide a random `secretKey`. With this key, you can compute an HMAC hash that authorizes you to send messages to arbitrary Matrix users using the `/matrix-bot/senddm/send` web endpoint (to use `senddm`, you need to pass a full MXID as `recipient`, a text for your message as `message` and the hex-encoded SHA512 HMAC for the concatenation of `recipient` and `message` as `hmac`; you can pass these three parameters either as a `GET` query string or via `POST` as JSON data).
+
 - `twitter` module: Please ignore the configuration options there for now. The Twitter module is not yet operational.
 
 - `weather` module: This module uses the OpenWeatherMap API. You can get a free API key from their website and need to paste this key into the `weatherApiKey` configuration option.
@@ -77,6 +80,7 @@ The file `matrix-bot-config.js` knows the following configuration options for th
 - `wunderlist` module, `wunderlistClientID` option: The [Wunderlist API](https://developer.wunderlist.com/) requires a client ID that can be obtained by registering for free on their developer portal.
 - `wunderlist` module, `wunderlistClientSecret` option: The [Wunderlist API](https://developer.wunderlist.com/) requires a client secret that can be obtained by registering for free on their developer portal.
 - `wunderlist` module, `sqliteDatabase` option: The Wunderlist module stores persistent information (authentication credentials) in an SQLite database. This parameter specifies the path to the database, relative to the main folder, which you should have created before using the `create_databases.sh` shell script (see above). The shell script by default creates `wunderlist.sqlite`.
+
 
 ### Bitmessage configuration
 Integration with Bitmessage requires a running [PyBitmessage](https://bitmessage.org/wiki/Main_Page) instance on the server where the bot is running. You need to enable the API as explained in Bitmessage’s [API Reference](https://bitmessage.org/wiki/API_Reference).
@@ -97,9 +101,15 @@ Hello Matrix generally explains himself. Just invite him (`@hello-matrix:matrix.
 
 If you want to know what commands Hello Matrix understands, you can ask by calling for help:
 
+```
+!help
+```
 
 If you have identified an interesting feature set, you can get more help into how to use this specific functionality by calling help with the name of the feature:
 
+```
+!help feature
+```
 
 Hello Matrix will respond with an explanation of all the commands to be performed for the Wunderlist integration.
 
@@ -113,10 +123,11 @@ At the moment, the following is unsupported by this bot:
 ## Roadmap
 There are a lot of cool integrations that would be interesting to add, but for the moment the following items are high on the agenda and will be implemented "as time permits" in this order:
 
-1. "Send DM" webhook for admins (provides a simple webhook to send DMs to arbitrary Matrix users)
-2. Zapier integration
+1. Zapier integration
+2. Gitlab integration
 3. Support for providing statistics on room discussion, similar to what [pigs](http://pisg.sourceforge.net/) does for IRC chats
 4. Simple reminder / alarm clock functionality
+
 
 ## Questions?
 If you have any questions, feel free to join [\#hello-matrix-bot:matrix.org](https://matrix.to/#/#hello-matrix-bot:matrix.org) for answers. If any questions come up frequently, we will add them here.
