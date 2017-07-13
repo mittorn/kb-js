@@ -17,8 +17,17 @@ if (typeof localStorage === "undefined" || localStorage === null) {
   var localStorage = new LocalStorage(config.localStorage);
 }
 
-// matrix-js-sdk
-// var Olm = require("olm");
+// Loading libolm
+try {
+  console.log('Loading olm...');
+  global.Olm = require('olm');
+} catch (err) {
+  console.log('ERROR: We couldn\'t load libolm: ' + err);
+  console.log('ERROR: libolm is required as Hello Matrix Bot uses end-to-end encryption.');
+  process.exit(1);
+}
+
+// Loading Matrix SDK
 var sdk = require("matrix-js-sdk");
 
 
