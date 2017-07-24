@@ -198,7 +198,13 @@ loginPromise.then(function() {
 
   // We use the default initialSyncLimit of 8 as it is also used for subsequent requests
   // However, we ignore messages older than 3 minutes (see above) to avoid replying to stale requests
-  client.matrixClient.startClient({});
+  try {
+    client.matrixClient.startClient({});
+  } catch(err) {
+    console.log('WARNING: Caught matrixClient error:');
+    console.log(err);
+    console.log('WARNING: You might need to restart the bot.');
+  }
 });
 
 
