@@ -14,6 +14,9 @@ helpModules['dice'] = dice.getHelp;
 var kanban = require("./kanban.js");
 helpModules['kanban'] = kanban.getHelp;
 
+var senddm = require("./senddm.js");
+helpModules['senddm'] = senddm.getHelp;
+
 var traceroute = require("./traceroute.js");
 helpModules['traceroute'] = traceroute.getHelp;
 

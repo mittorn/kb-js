@@ -17,10 +17,19 @@ if (typeof localStorage === "undefined" || localStorage === null) {
   var localStorage = new LocalStorage(config.localStorage);
 }
 
-// matrix-js-sdk
-// var Olm = require("olm");
-var sdk = require("matrix-js-sdk");
+// Loading libolm
+try {
+  console.log('Loading olm...');
+  global.Olm = require('olm');
+} catch (err) {
+  console.log('ERROR: We couldn\'t load libolm: ' + err);
+  console.log('ERROR: libolm is required as Hello Matrix Bot uses end-to-end encryption.');
+  process.exit(1);
+}
 
+// Loading Matrix SDK
+var sdk = require("matrix-js-sdk");
+client.matrixSDK = sdk;
 
 
 ///// CONFIGURATION OF BOT-MODULES
@@ -32,6 +41,7 @@ botModules['calculate'] = require("./bot-modules/calculate.js");
 botModules['dice'] = require('./bot-modules/dice.js');
 botModules['help'] = require("./bot-modules/help.js");
 botModules['kanban'] = require("./bot-modules/kanban.js");
+botModules['senddm'] = require("./bot-modules/senddm.js");
 botModules['traceroute'] = require("./bot-modules/traceroute.js");
 botModules['weather'] = require("./bot-modules/weather.js");
 botModules['webhook'] = require("./bot-modules/webhook.js");
@@ -83,10 +93,9 @@ loginPromise.then(function() {
     deviceId: localStorage.getItem('deviceId')
   });
 
-
   // Automatically join rooms when invited
   client.matrixClient.on("RoomMember.membership", function(event, member) {
-    if (member.membership === "invite" && member.userId === config.botUserId) {
+    if (member.membership === "invite" && member.userId === localStorage.getItem('userId')) {
       console.log("Received invite for %s from %s. Auto-joining...", member.roomId, event.getSender());
 
       client.matrixClient.joinRoom(member.roomId)
@@ -107,7 +116,7 @@ loginPromise.then(function() {
         console.log('An error occured while trying to reject / process room invites:' + JSON.stringify(err));
       })
         .done();
-    } else if(member.userId === config.botUserId) {
+    } else if(member.userId === localStorage.getItem('userId')) {
       console.log("Received UNPROCESSED membership event of type %s for myself in room %s from %s.", member.membership, member.roomId, event.getSender());
 
       // TODO: Enable processing of other events (kicks, bans, etc.)
@@ -120,7 +129,7 @@ loginPromise.then(function() {
 
       // Listen for messages starting with a bang (!)
       client.matrixClient.on("Room.timeline", function(event, room, toStartOfTimeline) {
-        if (toStartOfTimeline || event.getSender() === config.botUserId) {
+        if (toStartOfTimeline || event.getSender() === localStorage.getItem('userId')) {
           return; // don't use stale results or own data
         }
         if (event.getType() !== "m.room.message") {
@@ -189,7 +198,13 @@ loginPromise.then(function() {
 
   // We use the default initialSyncLimit of 8 as it is also used for subsequent requests
   // However, we ignore messages older than 3 minutes (see above) to avoid replying to stale requests
-  client.matrixClient.startClient({});
+  try {
+    client.matrixClient.startClient({});
+  } catch(err) {
+    console.log('WARNING: Caught matrixClient error:');
+    console.log(err);
+    console.log('WARNING: You might need to restart the bot.');
+  }
 });
 
 
