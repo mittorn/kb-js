@@ -4,6 +4,8 @@ var helpModules = {};
 
 var traceroute = require("./traceroute.js");
 helpModules['traceroute'] = traceroute.getHelp;
+var masta = require("./masta.js");
+helpModules['маста'] = masta.getHelp;
 
 
 exports.runQuery = function(client, query, querySender, queryRoom) {
