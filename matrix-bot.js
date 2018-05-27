@@ -36,18 +36,9 @@ client.matrixSDK = sdk;
 
 var botModules = {};
 
-botModules['bitmessage'] = require("./bot-modules/bitmessage.js");
-botModules['calculate'] = require("./bot-modules/calculate.js");
-botModules['dice'] = require('./bot-modules/dice.js');
-botModules['help'] = require("./bot-modules/help.js");
-botModules['kanban'] = require("./bot-modules/kanban.js");
-botModules['senddm'] = require("./bot-modules/senddm.js");
+botModules['помощь'] = require("./bot-modules/help.js");
+botModules['маста'] = require("./bot-modules/masta.js");
 botModules['traceroute'] = require("./bot-modules/traceroute.js");
-botModules['weather'] = require("./bot-modules/weather.js");
-botModules['webhook'] = require("./bot-modules/webhook.js");
-botModules['whois'] = require("./bot-modules/whois.js");
-botModules['wunderlist'] = require("./bot-modules/wunderlist.js");
-
 
 
 
@@ -147,7 +138,7 @@ loginPromise.then(function() {
 
         // Is it a bang?
         var botCommand;
-        if(botCommand = event.getContent().body.match(/^\s*!([a-z]+)( (.+))?/)) {
+        if(botCommand = event.getContent().body.match(/^\s*кб ([A-я]+)( (.+))?/)) {
           // Log to console
           console.log('Bang match: ' + botCommand[1] + ' ' + botCommand[3]);
 

@@ -10,7 +10,7 @@ exports.runQuery = function(client, query, querySender, queryRoom) {
   if(query && (hostMatch = query.match(/[a-zA-Z0-9][a-zA-Z0-9\.\-]+/))) {
     // executes
     console.log('Traceroute: Running for ' + hostMatch[0] + '...');
-    traceroute = exec("/usr/sbin/traceroute -m 30 -w 1 " + hostMatch[0], function (error, stdout, stderr) {
+    traceroute = exec("traceroute -m 30 -w 1 " + hostMatch[0], function (error, stdout, stderr) {
       var line = '';
       if (error !== null) {
         line = 'Traceroute error: ' + stderr;
